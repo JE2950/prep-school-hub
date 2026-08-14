@@ -1,0 +1,405 @@
+// Prep School Hub — data model
+// Note: SQLite has no native enum support in Prisma, so "enum-like" fields
+// are plain Strings; allowed values are validated in the API layer and
+// documented in comments next to each field.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- App / Auth ----------
+
+model AppConfig {
+  id           Int      @id @default(1)
+  teacherName  String   @default("")
+  schoolName   String   @default("")
+  passcodeHash String
+  setupDone    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ---------- Calendar / Terms ----------
+
+model Term {
+  id             String   @id @default(cuid())
+  name           String // Michaelmas | Lent | Summer
+  academicYear   String // e.g. "2025/26"
+  startDate      DateTime
+  endDate        DateTime
+  halfTermStart  DateTime?
+  halfTermEnd    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model CalendarEvent {
+  id        String   @id @default(cuid())
+  title     String
+  date      DateTime
+  endDate   DateTime?
+  allDay    Boolean  @default(true)
+  category  String // academic | sport | pastoral | admin | personal
+  type      String? // exeat | inset | exam | report-deadline | parents-evening | ce | scholarship | fixture | other
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Classes / Pupils / Timetable ----------
+
+model TutorGroup {
+  id           String  @id @default(cuid())
+  name         String
+  academicYear String
+  pupils       Pupil[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Pupil {
+  id            String   @id @default(cuid())
+  firstName     String
+  lastName      String
+  dob           DateTime?
+  tutorGroupId  String?
+  tutorGroup    TutorGroup? @relation(fields: [tutorGroupId], references: [id])
+  classes       ClassPupil[]
+  teams         TeamPupil[]
+  pastoralNotes PastoralNote[]
+  commsLog      ParentCommunicationLog[]
+  ceCandidate   CECandidate?
+  markScores    MarkScore[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Class {
+  id             String   @id @default(cuid())
+  name           String // e.g. 7L1
+  subject        String // e.g. Latin, French, TPR
+  yearGroup      String?
+  currentTopic   String?
+  notes          String?
+  pupils         ClassPupil[]
+  timetableSlots TimetableSlot[]
+  sowTopics      SchemeOfWorkTopic[]
+  reflections    LessonReflection[]
+  assessments    MarkAssessment[]
+  coverFolder    CoverFolder?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ClassPupil {
+  id      String @id @default(cuid())
+  classId String
+  pupilId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  pupil   Pupil  @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, pupilId])
+}
+
+model TimetableSlot {
+  id        String  @id @default(cuid())
+  dayOfWeek Int // 1 = Monday .. 5 = Friday
+  week      String? // A | B | null (single-week timetable)
+  startTime String // "09:00"
+  endTime   String // "09:40"
+  room      String?
+  classId   String
+  class     Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Planning / Goals ----------
+
+model TermlyGoal {
+  id         String   @id @default(cuid())
+  title      String
+  category   String // professional | departmental | pastoral | personal
+  academicYear String?
+  term       String? // Michaelmas | Lent | Summer
+  progress   Int      @default(0) // 0-100
+  status     String   @default("in-progress") // not-started | in-progress | done
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model SchemeOfWorkTopic {
+  id        String   @id @default(cuid())
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  order     Int      @default(0)
+  title     String
+  status    String   @default("planned") // planned | taught | assessed | revisited
+  notes     String?
+  reflections LessonReflection[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LessonReflection {
+  id          String   @id @default(cuid())
+  classId     String
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  topicId     String?
+  topic       SchemeOfWorkTopic? @relation(fields: [topicId], references: [id])
+  date        DateTime @default(now())
+  whatWorked  String?
+  whatDidnt   String?
+  nextSteps   String?
+  tags        String? // comma-separated
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------- Markbook / CE tracker ----------
+
+model MarkAssessment {
+  id        String   @id @default(cuid())
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  title     String
+  type      String // test | prep | vocab
+  date      DateTime @default(now())
+  maxScore  Float    @default(100)
+  scores    MarkScore[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MarkScore {
+  id           String        @id @default(cuid())
+  assessmentId String
+  assessment   MarkAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  pupilId      String
+  pupil        Pupil         @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+  score        Float?
+
+  @@unique([assessmentId, pupilId])
+}
+
+model CECandidate {
+  id            String   @id @default(cuid())
+  pupilId       String   @unique
+  pupil         Pupil    @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+  examBoard     String? // ISEB CE | Scholarship | Other
+  targetSchool  String?
+  notes         String?
+  results       CEPracticeResult[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CEPracticeResult {
+  id          String      @id @default(cuid())
+  candidateId String
+  candidate   CECandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  subject     String
+  paper       String?
+  date        DateTime    @default(now())
+  score       Float?
+  maxScore    Float       @default(100)
+  notes       String?
+}
+
+// ---------- Cover work ----------
+
+model CoverFolder {
+  id                  String  @id @default(cuid())
+  classId             String  @unique
+  class               Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  standingCoverLesson String?
+  seatingNotes        String?
+  pupilNotes          String?
+  updatedAt           DateTime @updatedAt
+}
+
+// ---------- Duties / Pastoral ----------
+
+model DutyRotaEntry {
+  id          String   @id @default(cuid())
+  dayOfWeek   Int // 1-5, or 6/7 for weekend boarding duties
+  startTime   String
+  endTime     String
+  type        String // break | lunch | boarding | other
+  location    String?
+  notes       String?
+  specificDate DateTime? // set for one-off duties instead of recurring
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PastoralNote {
+  id        String   @id @default(cuid())
+  pupilId   String
+  pupil     Pupil    @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+  date      DateTime @default(now())
+  note      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ParentCommunicationLog {
+  id        String   @id @default(cuid())
+  pupilId   String
+  pupil     Pupil    @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+  date      DateTime @default(now())
+  method    String // phone | email | in-person | letter
+  summary   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Co-curricular / Sport ----------
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String // e.g. U11B Cricket
+  sport     String
+  season    String? // Michaelmas | Lent | Summer
+  pupils    TeamPupil[]
+  training  TrainingSession[]
+  fixtures  Fixture[]
+  kitItems  KitChecklistItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TeamPupil {
+  id     String @id @default(cuid())
+  teamId String
+  pupilId String
+  team   Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  pupil  Pupil @relation(fields: [pupilId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, pupilId])
+}
+
+model TrainingSession {
+  id        String @id @default(cuid())
+  teamId    String
+  team      Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  location  String?
+}
+
+model Fixture {
+  id               String   @id @default(cuid())
+  teamId           String
+  team             Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  date             DateTime
+  opponent         String
+  homeAway         String // home | away
+  venue            String?
+  result           String? // W | L | D | postponed | tbc
+  scoreSummary     String?
+  matchReportDraft String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model KitChecklistItem {
+  id        String  @id @default(cuid())
+  teamId    String
+  team      Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  season    String?
+  item      String
+  checked   Boolean @default(false)
+}
+
+// ---------- CPD / Career ----------
+
+model CPDEntry {
+  id                String   @id @default(cuid())
+  title             String
+  provider          String?
+  date              DateTime @default(now())
+  hours             Float?
+  certificateFile   String?
+  reflection        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Qualification {
+  id            String    @id @default(cuid())
+  name          String // e.g. First Aid, Safeguarding, DBS, Coaching Award
+  issuedDate    DateTime?
+  expiryDate    DateTime?
+  reminderDays  Int       @default(30)
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model CareerMilestone {
+  id            String   @id @default(cuid())
+  title         String
+  date          DateTime @default(now())
+  description   String?
+  evidenceFile  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ---------- Contacts ----------
+
+model Contact {
+  id                  String   @id @default(cuid())
+  name                String
+  role                String?
+  type                String // school | external
+  department          String?
+  phone               String?
+  email                String?
+  credentialsLocation String? // e.g. "in password manager" — never store actual credentials
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// ---------- Emergency procedures ----------
+
+model ProcedureDoc {
+  id        String   @id @default(cuid())
+  title     String
+  category  String // fire | lockdown | medical | safeguarding | key-locations | other
+  content   String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Quick tasks / notes ----------
+
+model Task {
+  id        String   @id @default(cuid())
+  title     String
+  dueDate   DateTime?
+  done      Boolean  @default(false)
+  category  String? // academic | sport | pastoral | admin | personal
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String?
+  content   String
+  date      DateTime @default(now())
+  tags      String? // comma-separated
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

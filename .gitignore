@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+
+# Server
+server/.env
+server/prisma/dev.db
+server/prisma/dev.db-journal
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Client
+client/.env
+
+# Editor / OS
+.DS_Store
+*.log
