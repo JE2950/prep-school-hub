@@ -16,7 +16,7 @@ function fmt(d: Date | null | undefined): string {
 router.post("/cover-lesson", async (req, res) => {
   const { classId } = req.body ?? {};
   const cls = await prisma.class.findUnique({
-    where: { id: classId },
+    where: { id: classId, deletedAt: null },
     include: { coverFolder: true, sowTopics: { orderBy: { order: "asc" } } },
   });
   if (!cls) return res.status(404).json({ error: "Class not found." });
@@ -81,7 +81,10 @@ Keep it to around 250 words, in a professional but personal tone.`;
 
 router.post("/match-report", async (req, res) => {
   const { fixtureId } = req.body ?? {};
-  const fixture = await prisma.fixture.findUnique({ where: { id: fixtureId }, include: { team: true } });
+  const fixture = await prisma.fixture.findUnique({
+    where: { id: fixtureId, deletedAt: null },
+    include: { team: true },
+  });
   if (!fixture) return res.status(404).json({ error: "Fixture not found." });
 
   const prompt = `You are helping a UK prep school teacher write a short match report for the school newsletter/website.
@@ -102,7 +105,7 @@ Please draft a warm, positive 100-150 word match report in British English suita
 router.post("/parent-email", async (req, res) => {
   const { commsLogId } = req.body ?? {};
   const entry = await prisma.parentCommunicationLog.findUnique({
-    where: { id: commsLogId },
+    where: { id: commsLogId, deletedAt: null },
     include: { pupil: true },
   });
   if (!entry) return res.status(404).json({ error: "Communication log entry not found." });
@@ -132,7 +135,7 @@ Sign off as "[Your name]".`;
 router.post("/sow-next-steps", async (req, res) => {
   const { classId } = req.body ?? {};
   const cls = await prisma.class.findUnique({
-    where: { id: classId },
+    where: { id: classId, deletedAt: null },
     include: { sowTopics: { orderBy: { order: "asc" } } },
   });
   if (!cls) return res.status(404).json({ error: "Class not found." });
@@ -155,8 +158,8 @@ router.post("/weekly-todo", async (req, res) => {
   const now = new Date();
   const weekAhead = addDays(now, 7);
   const [events, tasks] = await Promise.all([
-    prisma.calendarEvent.findMany({ where: { date: { gte: now, lte: weekAhead } }, orderBy: { date: "asc" } }),
-    prisma.task.findMany({ where: { done: false }, orderBy: { dueDate: "asc" } }),
+    prisma.calendarEvent.findMany({ where: { deletedAt: null, date: { gte: now, lte: weekAhead } }, orderBy: { date: "asc" } }),
+    prisma.task.findMany({ where: { deletedAt: null, done: false }, orderBy: { dueDate: "asc" } }),
   ]);
 
   const prompt = `You are helping a UK prep school teacher plan their week. Turn the following into a prioritised to-do list, grouping by urgency (today/this week/can wait), in British English.

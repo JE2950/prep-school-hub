@@ -35,6 +35,7 @@ model Term {
   endDate        DateTime
   halfTermStart  DateTime?
   halfTermEnd    DateTime?
+  deletedAt      DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -48,6 +49,7 @@ model CalendarEvent {
   category  String // academic | sport | pastoral | admin | personal
   type      String? // exeat | inset | exam | report-deadline | parents-evening | ce | scholarship | fixture | other
   notes     String?
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -59,6 +61,7 @@ model TutorGroup {
   name         String
   academicYear String
   pupils       Pupil[]
+  deletedAt    DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -80,6 +83,7 @@ model Pupil {
   commsLog      ParentCommunicationLog[]
   ceCandidate   CECandidate?
   markScores    MarkScore[]
+  deletedAt     DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -97,6 +101,7 @@ model Class {
   reflections    LessonReflection[]
   assessments    MarkAssessment[]
   coverFolder    CoverFolder?
+  deletedAt      DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -135,6 +140,7 @@ model TermlyGoal {
   progress   Int      @default(0) // 0-100
   status     String   @default("in-progress") // not-started | in-progress | done
   notes      String?
+  deletedAt  DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -250,6 +256,7 @@ model PastoralNote {
   pupil     Pupil    @relation(fields: [pupilId], references: [id], onDelete: Cascade)
   date      DateTime @default(now())
   note      String
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -261,6 +268,7 @@ model ParentCommunicationLog {
   date      DateTime @default(now())
   method    String // phone | email | in-person | letter
   summary   String
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -276,6 +284,7 @@ model Team {
   training  TrainingSession[]
   fixtures  Fixture[]
   kitItems  KitChecklistItem[]
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -311,6 +320,7 @@ model Fixture {
   result           String? // W | L | D | postponed | tbc
   scoreSummary     String?
   matchReportDraft String?
+  deletedAt        DateTime?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -334,6 +344,7 @@ model CPDEntry {
   hours             Float?
   certificateFile   String?
   reflection        String?
+  deletedAt         DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
@@ -345,6 +356,7 @@ model Qualification {
   expiryDate    DateTime?
   reminderDays  Int       @default(30)
   notes         String?
+  deletedAt     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -355,6 +367,7 @@ model CareerMilestone {
   date          DateTime @default(now())
   description   String?
   evidenceFile  String?
+  deletedAt     DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -371,6 +384,7 @@ model Contact {
   email                String?
   credentialsLocation String? // e.g. "in password manager" — never store actual credentials
   notes               String?
+  deletedAt           DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
@@ -383,6 +397,7 @@ model ProcedureDoc {
   category  String // fire | lockdown | medical | safeguarding | key-locations | other
   content   String
   order     Int      @default(0)
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -395,6 +410,7 @@ model Task {
   dueDate   DateTime?
   done      Boolean  @default(false)
   category  String? // academic | sport | pastoral | admin | personal
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -405,6 +421,7 @@ model Note {
   content   String
   date      DateTime @default(now())
   tags      String? // comma-separated
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

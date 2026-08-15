@@ -5,7 +5,7 @@ import { startOfWeek } from "./dates";
 // cycle, counted from the start of the current term. Weeks are Mon-based.
 export async function getCurrentTimetableWeek(date: Date): Promise<"A" | "B"> {
   const term = await prisma.term.findFirst({
-    where: { startDate: { lte: date }, endDate: { gte: date } },
+    where: { deletedAt: null, startDate: { lte: date }, endDate: { gte: date } },
     orderBy: { startDate: "desc" },
   });
   if (!term) return "A";

@@ -4,8 +4,10 @@ import { prisma } from "../lib/prisma";
 import {
   buildPupilsWorkbook,
   buildTermsWorkbook,
+  buildTimetableWorkbook,
   parsePupilsWorkbook,
   parseTermsWorkbook,
+  parseTimetableWorkbook,
   ParsedPupilRow,
 } from "../lib/excelTemplates";
 
@@ -13,6 +15,13 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 const TERM_NAMES = ["Michaelmas", "Lent", "Summer"];
+const DAY_NUMBERS: Record<string, number> = {
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+};
 
 // ---------- Pupils ----------
 
@@ -198,6 +207,85 @@ router.post("/terms", upload.single("file"), async (req, res) => {
       summary.updated++;
     } else {
       await prisma.term.create({ data });
+      summary.created++;
+    }
+  }
+
+  res.json(summary);
+});
+
+// ---------- Timetable ----------
+
+const TIME_FORMAT = /^([01]?\d|2[0-3]):([0-5]\d)$/;
+
+router.get("/timetable/template", async (req, res) => {
+  const buffer = await buildTimetableWorkbook([]);
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", 'attachment; filename="timetable-template.xlsx"');
+  res.send(Buffer.from(buffer));
+});
+
+router.get("/timetable/export", async (req, res) => {
+  const slots = await prisma.timetableSlot.findMany({
+    include: { class: true },
+    orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
+  });
+  const buffer = await buildTimetableWorkbook(slots);
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", 'attachment; filename="timetable-export.xlsx"');
+  res.send(Buffer.from(buffer));
+});
+
+router.post("/timetable", upload.single("file"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded." });
+  let rows;
+  try {
+    rows = await parseTimetableWorkbook(req.file.buffer);
+  } catch {
+    return res.status(400).json({ error: "Could not read that file — make sure it's the .xlsx template." });
+  }
+
+  const classes = await prisma.class.findMany();
+  const classByName = new Map(classes.map((c) => [c.name.toLowerCase(), c.id]));
+
+  const summary = { created: 0, updated: 0, errors: [] as { row: number; message: string }[] };
+
+  for (const row of rows) {
+    const dayNumber = DAY_NUMBERS[(row.day ?? "").toLowerCase()];
+    if (!dayNumber) {
+      summary.errors.push({ row: row.rowNumber, message: `Day must be Monday-Friday (got "${row.day ?? ""}").` });
+      continue;
+    }
+    if (!row.startTime || !TIME_FORMAT.test(row.startTime) || !row.endTime || !TIME_FORMAT.test(row.endTime)) {
+      summary.errors.push({ row: row.rowNumber, message: "Start/end time must be in HH:MM 24-hour format." });
+      continue;
+    }
+    const classId = row.className ? classByName.get(row.className.toLowerCase()) : undefined;
+    if (!classId) {
+      summary.errors.push({ row: row.rowNumber, message: `No class found named "${row.className ?? ""}".` });
+      continue;
+    }
+    const week = row.week?.toUpperCase();
+    if (week && week !== "A" && week !== "B") {
+      summary.errors.push({ row: row.rowNumber, message: `Week must be A, B, or blank (got "${row.week}").` });
+      continue;
+    }
+
+    const data = {
+      dayOfWeek: dayNumber,
+      week: week || null,
+      startTime: row.startTime,
+      endTime: row.endTime,
+      classId,
+      room: row.room ?? null,
+    };
+
+    const existing = row.id ? await prisma.timetableSlot.findUnique({ where: { id: row.id } }) : null;
+    if (existing) {
+      await prisma.timetableSlot.update({ where: { id: existing.id }, data });
+      summary.updated++;
+    } else {
+      await prisma.timetableSlot.create({ data });
       summary.created++;
     }
   }

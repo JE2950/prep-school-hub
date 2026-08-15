@@ -1,11 +1,20 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
 import { toCsv } from "../lib/csv";
+import { buildFullBackupWorkbook } from "../lib/backup";
 
 const router = Router();
 
+router.get("/backup.xlsx", async (req, res) => {
+  const buffer = await buildFullBackupWorkbook(prisma);
+  const stamp = new Date().toISOString().slice(0, 10);
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", `attachment; filename="prep-school-hub-backup-${stamp}.xlsx"`);
+  res.send(Buffer.from(buffer));
+});
+
 router.get("/cpd.csv", async (req, res) => {
-  const entries = await prisma.cPDEntry.findMany({ orderBy: { date: "desc" } });
+  const entries = await prisma.cPDEntry.findMany({ where: { deletedAt: null }, orderBy: { date: "desc" } });
   const csv = toCsv(
     entries.map((e) => ({
       ...e,
@@ -27,8 +36,8 @@ router.get("/cpd.csv", async (req, res) => {
 // One combined "tutoring records" export: tutor group roster + pastoral notes + comms log
 router.get("/tutoring.csv", async (req, res) => {
   const [notes, comms] = await Promise.all([
-    prisma.pastoralNote.findMany({ include: { pupil: true }, orderBy: { date: "desc" } }),
-    prisma.parentCommunicationLog.findMany({ include: { pupil: true }, orderBy: { date: "desc" } }),
+    prisma.pastoralNote.findMany({ where: { deletedAt: null }, include: { pupil: true }, orderBy: { date: "desc" } }),
+    prisma.parentCommunicationLog.findMany({ where: { deletedAt: null }, include: { pupil: true }, orderBy: { date: "desc" } }),
   ]);
 
   const rows = [

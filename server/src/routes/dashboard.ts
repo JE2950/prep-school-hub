@@ -38,34 +38,34 @@ router.get("/", async (req, res) => {
           })
         : Promise.resolve([]),
       prisma.fixture.findMany({
-        where: { date: { gte: today0, lte: today1 } },
+        where: { deletedAt: null, date: { gte: today0, lte: today1 } },
         include: { team: true },
       }),
       prisma.task.findMany({
-        where: { done: false },
+        where: { deletedAt: null, done: false },
         orderBy: { dueDate: "asc" },
         take: 8,
       }),
       prisma.calendarEvent.findMany({
-        where: { date: { gte: today0 } },
+        where: { deletedAt: null, date: { gte: today0 } },
         orderBy: { date: "asc" },
         take: 8,
       }),
       prisma.calendarEvent.findMany({
-        where: { date: { gte: startOfWeek(now), lte: endOfWeek(now) } },
+        where: { deletedAt: null, date: { gte: startOfWeek(now), lte: endOfWeek(now) } },
         orderBy: { date: "asc" },
       }),
     ]);
 
   // Countdown to next half term / end of term
   const currentTerm = await prisma.term.findFirst({
-    where: { startDate: { lte: now }, endDate: { gte: now } },
+    where: { deletedAt: null, startDate: { lte: now }, endDate: { gte: now } },
     orderBy: { startDate: "desc" },
   });
   const nextTerm = currentTerm
     ? null
     : await prisma.term.findFirst({
-        where: { startDate: { gt: now } },
+        where: { deletedAt: null, startDate: { gt: now } },
         orderBy: { startDate: "asc" },
       });
 

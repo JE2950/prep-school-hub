@@ -3,7 +3,7 @@ import ExcelJS from "exceljs";
 const HEADER_FILL: ExcelJS.Fill = {
   type: "pattern",
   pattern: "solid",
-  fgColor: { argb: "FF2C4E5C" },
+  fgColor: { argb: "FF134EA1" },
 };
 const DATE_FORMAT = "dd/mm/yyyy";
 
@@ -219,6 +219,96 @@ export async function parseTermsWorkbook(buffer: Buffer): Promise<ParsedTermRow[
       endDate: cellToUkDate(get(5)),
       halfTermStart: cellToUkDate(get(6)),
       halfTermEnd: cellToUkDate(get(7)),
+    });
+  });
+
+  return rows;
+}
+
+// ---------- Timetable ----------
+
+const DAY_NAMES = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
+const TIMETABLE_COLUMNS = [
+  { header: "SlotID (leave blank for a new slot)", key: "id", width: 26 },
+  { header: "Day (Monday-Friday)", key: "day", width: 16 },
+  { header: "Week (A, B, or blank for every week)", key: "week", width: 24 },
+  { header: "StartTime (HH:MM, 24hr)", key: "startTime", width: 18 },
+  { header: "EndTime (HH:MM, 24hr)", key: "endTime", width: 18 },
+  { header: "Class (must match an existing class exactly)", key: "className", width: 30 },
+  { header: "Room", key: "room", width: 14 },
+];
+
+export async function buildTimetableWorkbook(slots: any[]): Promise<ExcelJS.Buffer> {
+  const wb = new ExcelJS.Workbook();
+  const sheet = wb.addWorksheet("Timetable");
+  sheet.columns = TIMETABLE_COLUMNS;
+  styleHeaderRow(sheet.getRow(1));
+  // Force text formatting on time columns so Excel never "helpfully" turns
+  // "09:00" into a time-serial number that reads back inconsistently.
+  sheet.getColumn("startTime").numFmt = "@";
+  sheet.getColumn("endTime").numFmt = "@";
+
+  for (const s of slots) {
+    sheet.addRow({
+      id: s.id,
+      day: DAY_NAMES[s.dayOfWeek] ?? "",
+      week: s.week ?? "",
+      startTime: s.startTime,
+      endTime: s.endTime,
+      className: s.class?.name ?? "",
+      room: s.room ?? "",
+    });
+  }
+
+  if (slots.length === 0) {
+    const sample = sheet.addRow({
+      id: "",
+      day: "Monday",
+      week: "",
+      startTime: "09:00",
+      endTime: "09:40",
+      className: "7L1",
+      room: "L1",
+    });
+    sample.font = { italic: true, color: { argb: "FF8794A1" } };
+  }
+
+  return wb.xlsx.writeBuffer();
+}
+
+export interface ParsedTimetableRow {
+  rowNumber: number;
+  id: string | null;
+  day: string | null;
+  week: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  className: string | null;
+  room: string | null;
+}
+
+export async function parseTimetableWorkbook(buffer: Buffer): Promise<ParsedTimetableRow[]> {
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buffer as any);
+  const sheet = wb.worksheets[0];
+  const rows: ParsedTimetableRow[] = [];
+
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return;
+    const get = (col: number) => row.getCell(col).value;
+    const day = cellToString(get(2));
+    const className = cellToString(get(6));
+    if (!day && !className) return;
+    rows.push({
+      rowNumber,
+      id: cellToString(get(1)),
+      day,
+      week: cellToString(get(3)),
+      startTime: cellToString(get(4)),
+      endTime: cellToString(get(5)),
+      className,
+      room: cellToString(get(7)),
     });
   });
 

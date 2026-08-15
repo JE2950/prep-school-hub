@@ -5,12 +5,12 @@ const router = Router();
 
 router.use(
   "/terms",
-  crudRouter("term", { orderBy: { startDate: "asc" } })
+  crudRouter("term", { orderBy: { startDate: "asc" }, softDelete: true })
 );
 
 router.use(
   "/calendar-events",
-  crudRouter("calendarEvent", { orderBy: { date: "asc" } })
+  crudRouter("calendarEvent", { orderBy: { date: "asc" }, softDelete: true })
 );
 
 router.use(
@@ -18,6 +18,7 @@ router.use(
   crudRouter("tutorGroup", {
     include: { pupils: true },
     orderBy: { name: "asc" },
+    softDelete: true,
   })
 );
 
@@ -27,6 +28,7 @@ router.use(
     include: { tutorGroup: true, classes: { include: { class: true } } },
     orderBy: { lastName: "asc" },
     filterKeys: ["tutorGroupId"],
+    softDelete: true,
   })
 );
 
@@ -39,6 +41,7 @@ router.use(
       coverFolder: true,
     },
     orderBy: { name: "asc" },
+    softDelete: true,
   })
 );
 
@@ -58,7 +61,7 @@ router.use(
 
 router.use(
   "/termly-goals",
-  crudRouter("termlyGoal", { orderBy: { createdAt: "desc" } })
+  crudRouter("termlyGoal", { orderBy: { createdAt: "desc" }, softDelete: true })
 );
 
 router.use(
@@ -126,6 +129,7 @@ router.use(
     include: { pupil: true },
     orderBy: { date: "desc" },
     filterKeys: ["pupilId"],
+    softDelete: true,
   })
 );
 
@@ -135,6 +139,7 @@ router.use(
     include: { pupil: true },
     orderBy: { date: "desc" },
     filterKeys: ["pupilId"],
+    softDelete: true,
   })
 );
 
@@ -148,6 +153,7 @@ router.use(
       kitItems: true,
     },
     orderBy: { name: "asc" },
+    softDelete: true,
   })
 );
 
@@ -167,6 +173,7 @@ router.use(
     include: { team: true },
     orderBy: { date: "asc" },
     filterKeys: ["teamId"],
+    softDelete: true,
   })
 );
 
@@ -177,37 +184,37 @@ router.use(
 
 router.use(
   "/cpd-entries",
-  crudRouter("cPDEntry", { orderBy: { date: "desc" } })
+  crudRouter("cPDEntry", { orderBy: { date: "desc" }, softDelete: true })
 );
 
 router.use(
   "/qualifications",
-  crudRouter("qualification", { orderBy: { expiryDate: "asc" } })
+  crudRouter("qualification", { orderBy: { expiryDate: "asc" }, softDelete: true })
 );
 
 router.use(
   "/career-milestones",
-  crudRouter("careerMilestone", { orderBy: { date: "desc" } })
+  crudRouter("careerMilestone", { orderBy: { date: "desc" }, softDelete: true })
 );
 
 router.use(
   "/contacts",
-  crudRouter("contact", { orderBy: { name: "asc" } })
+  crudRouter("contact", { orderBy: { name: "asc" }, softDelete: true })
 );
 
 router.use(
   "/procedures",
-  crudRouter("procedureDoc", { orderBy: { order: "asc" } })
+  crudRouter("procedureDoc", { orderBy: { order: "asc" }, softDelete: true })
 );
 
 router.use(
   "/tasks",
-  crudRouter("task", { orderBy: [{ done: "asc" }, { dueDate: "asc" }] })
+  crudRouter("task", { orderBy: [{ done: "asc" }, { dueDate: "asc" }], softDelete: true })
 );
 
 router.use(
   "/notes",
-  crudRouter("note", { orderBy: { date: "desc" } })
+  crudRouter("note", { orderBy: { date: "desc" }, softDelete: true })
 );
 
 export default router;

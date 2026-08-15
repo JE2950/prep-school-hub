@@ -19,6 +19,7 @@ import { ContactsPage } from "./pages/ContactsPage";
 import { ProceduresPage } from "./pages/ProceduresPage";
 import { SearchPage } from "./pages/SearchPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { RecycleBinPage } from "./pages/RecycleBinPage";
 
 function LoadingScreen() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="/procedures" element={<ProceduresPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings/recycle-bin" element={<RecycleBinPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -16,6 +16,9 @@ interface CrudOptions {
   beforeWrite?: (body: any) => any;
   // Query string keys that may be used as an exact-match filter, e.g. ?classId=xyz
   filterKeys?: string[];
+  // When true, DELETE marks deletedAt instead of removing the row, and
+  // list/get hide anything with deletedAt set — recoverable via the recycle bin.
+  softDelete?: boolean;
 }
 
 /**
@@ -34,6 +37,7 @@ export function crudRouter(modelName: string, options: CrudOptions = {}) {
         where[key] = req.query[key];
       }
     }
+    if (options.softDelete) where.deletedAt = null;
     const items = await delegate.findMany({
       where: Object.keys(where).length ? where : undefined,
       include: options.include,
@@ -43,10 +47,9 @@ export function crudRouter(modelName: string, options: CrudOptions = {}) {
   });
 
   router.get("/:id", async (req, res) => {
-    const item = await delegate.findUnique({
-      where: { id: req.params.id },
-      include: options.include,
-    });
+    const where: Record<string, any> = { id: req.params.id };
+    if (options.softDelete) where.deletedAt = null;
+    const item = await delegate.findUnique({ where, include: options.include });
     if (!item) return res.status(404).json({ error: "Not found." });
     res.json(item);
   });
@@ -77,7 +80,11 @@ export function crudRouter(modelName: string, options: CrudOptions = {}) {
 
   router.delete("/:id", async (req, res) => {
     try {
-      await delegate.delete({ where: { id: req.params.id } });
+      if (options.softDelete) {
+        await delegate.update({ where: { id: req.params.id }, data: { deletedAt: new Date() } });
+      } else {
+        await delegate.delete({ where: { id: req.params.id } });
+      }
       res.status(204).end();
     } catch (e: any) {
       res.status(400).json({ error: e.message ?? "Could not delete." });

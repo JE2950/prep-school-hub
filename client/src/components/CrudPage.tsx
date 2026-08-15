@@ -55,7 +55,7 @@ export function CrudPage<T extends { id: string }>({
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this item? This cannot be undone.")) return;
+    if (!confirm("Delete this item? You can restore it from Settings → Recycle bin within 30 days.")) return;
     await api.del(`${apiPath}/${id}`);
     await load();
   }

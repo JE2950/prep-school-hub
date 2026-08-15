@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import { Modal } from "../../components/Modal";
 import { FieldDef, ResourceForm } from "../../components/ResourceForm";
+import { ImportExportBar } from "../../components/ImportExportBar";
 
 interface Slot {
   id: string;
@@ -101,6 +102,16 @@ export function TimetableBuilderPage() {
         <button className="btn-primary" onClick={() => setModal({ editing: null })}>
           + Add slot
         </button>
+      </div>
+
+      <div className="mb-4">
+        <ImportExportBar
+          label="Timetable"
+          templateUrl="/api/imports/timetable/template"
+          exportUrl="/api/imports/timetable/export"
+          importUrl="/imports/timetable"
+          onImported={load}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-3">

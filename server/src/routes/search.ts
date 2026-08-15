@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
 
   const [notes, reflections, pastoralNotes, commsLog, cpdEntries] = await Promise.all([
     prisma.note.findMany({
-      where: { OR: [{ title: contains }, { content: contains }, { tags: contains }] },
+      where: { deletedAt: null, OR: [{ title: contains }, { content: contains }, { tags: contains }] },
       orderBy: { date: "desc" },
       take: 15,
     }),
@@ -26,19 +26,19 @@ router.get("/", async (req, res) => {
       take: 15,
     }),
     prisma.pastoralNote.findMany({
-      where: { note: contains },
+      where: { deletedAt: null, note: contains },
       include: { pupil: true },
       orderBy: { date: "desc" },
       take: 15,
     }),
     prisma.parentCommunicationLog.findMany({
-      where: { summary: contains },
+      where: { deletedAt: null, summary: contains },
       include: { pupil: true },
       orderBy: { date: "desc" },
       take: 15,
     }),
     prisma.cPDEntry.findMany({
-      where: { OR: [{ title: contains }, { reflection: contains }] },
+      where: { deletedAt: null, OR: [{ title: contains }, { reflection: contains }] },
       orderBy: { date: "desc" },
       take: 15,
     }),

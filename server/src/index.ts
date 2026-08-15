@@ -14,6 +14,8 @@ import exportRoutes from "./routes/exports";
 import aiPromptRoutes from "./routes/aiPrompts";
 import uploadRoutes from "./routes/uploads";
 import importRoutes from "./routes/imports";
+import recycleBinRoutes from "./routes/recycleBin";
+import demoRoutes from "./routes/demo";
 import { requireAuth } from "./lib/requireAuth";
 
 const app = express();
@@ -47,6 +49,8 @@ app.use("/api/exports", requireAuth, exportRoutes);
 app.use("/api/ai-prompts", requireAuth, aiPromptRoutes);
 app.use("/api/uploads", requireAuth, uploadRoutes);
 app.use("/api/imports", requireAuth, importRoutes);
+app.use("/api/recycle-bin", requireAuth, recycleBinRoutes);
+app.use("/api/demo", requireAuth, demoRoutes);
 app.use("/api", requireAuth, resourceRoutes);
 
 if (isProd) {
