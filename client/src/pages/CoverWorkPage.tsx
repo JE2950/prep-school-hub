@@ -25,7 +25,7 @@ export function CoverWorkPage() {
     <div>
       <div className="no-print flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-semibold text-ink-900">Cover work</h1>
+          <h1 className="text-2xl font-semibold text-ink-900">Cover work</h1>
           <p className="text-sm text-ink-500 mt-0.5">Generate a printable cover sheet, or edit a class's standing cover folder.</p>
         </div>
         <div className="flex items-center gap-2">

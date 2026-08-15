@@ -28,7 +28,7 @@ export function SettingsPage() {
 
   return (
     <div className="max-w-md">
-      <h1 className="text-xl font-semibold text-ink-900 mb-4">Settings</h1>
+      <h1 className="text-2xl font-semibold text-ink-900 mb-4">Settings</h1>
 
       <div className="card p-4 mb-4">
         <p className="text-sm text-ink-700">

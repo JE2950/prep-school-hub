@@ -44,7 +44,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-ink-50 px-4">
       <div className="w-full max-w-sm card p-6">
-        <h1 className="text-lg font-semibold text-ink-900 mb-1">
+        <h1 className="text-2xl font-semibold text-ink-900 mb-1">
           {setupDone ? "Welcome back" : "Set up your Prep School Hub"}
         </h1>
         <p className="text-sm text-ink-500 mb-5">

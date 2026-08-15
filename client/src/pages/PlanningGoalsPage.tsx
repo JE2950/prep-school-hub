@@ -91,7 +91,7 @@ export function PlanningGoalsPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-semibold text-ink-900">Planning & goals</h1>
+          <h1 className="text-2xl font-semibold text-ink-900">Planning & goals</h1>
           <p className="text-sm text-ink-500 mt-0.5">Termly goals across professional, departmental, pastoral and personal.</p>
         </div>
         <div className="flex items-center gap-2">

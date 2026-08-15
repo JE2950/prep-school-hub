@@ -28,7 +28,7 @@ export function TeamDetailPage() {
       <Link to="/co-curricular" className="text-xs text-ink-400 hover:text-brand-700">
         ← All teams
       </Link>
-      <h1 className="text-xl font-semibold text-ink-900 mt-1 mb-4">
+      <h1 className="text-2xl font-semibold text-ink-900 mt-1 mb-4">
         {team.name} <span className="text-ink-400 font-normal">· {team.sport}</span>
       </h1>
 

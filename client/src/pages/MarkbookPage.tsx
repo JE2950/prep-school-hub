@@ -88,7 +88,7 @@ export function MarkbookPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-ink-900 mb-1">Markbook</h1>
+        <h1 className="text-2xl font-semibold text-ink-900 mb-1">Markbook</h1>
         <p className="text-sm text-ink-500 mb-3">Open a class to enter test, prep and vocab scores.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {classes.map((c) => (

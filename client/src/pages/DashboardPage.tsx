@@ -54,7 +54,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-xl font-semibold text-ink-900">{formatDateLong(data.date)}</h1>
+        <h1 className="text-2xl font-semibold text-ink-900">{formatDateLong(data.date)}</h1>
         <span className="badge bg-brand-100 text-brand-800">Timetable Week {data.week}</span>
       </div>
 
@@ -66,7 +66,7 @@ export function DashboardPage() {
         </div>
         <div className="card p-4">
           <p className="text-xs text-ink-500">Next half term</p>
-          <p className="text-lg font-semibold text-ink-900 mt-0.5">
+          <p className="text-2xl font-serif font-semibold text-accent-600 mt-0.5">
             {halfTermDays !== null ? `${halfTermDays} day${halfTermDays === 1 ? "" : "s"}` : "—"}
           </p>
           {data.countdown.nextHalfTerm && (
@@ -77,7 +77,7 @@ export function DashboardPage() {
           <p className="text-xs text-ink-500">
             {data.countdown.endOfTerm ? "End of term" : "Next term starts"}
           </p>
-          <p className="text-lg font-semibold text-ink-900 mt-0.5">
+          <p className="text-2xl font-serif font-semibold text-accent-600 mt-0.5">
             {data.countdown.endOfTerm
               ? endTermDays !== null
                 ? `${endTermDays} day${endTermDays === 1 ? "" : "s"}`

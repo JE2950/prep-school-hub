@@ -64,7 +64,7 @@ export function CrudPage<T extends { id: string }>({
     <div>
       <div className="flex items-start justify-between mb-4 gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-ink-900">{title}</h1>
+          <h1 className="text-2xl font-semibold text-ink-900">{title}</h1>
           {description && <p className="text-sm text-ink-500 mt-0.5">{description}</p>}
         </div>
         <button

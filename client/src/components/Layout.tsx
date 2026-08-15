@@ -33,9 +33,11 @@ export function Layout() {
   return (
     <div className="min-h-screen flex bg-ink-50">
       <aside className="no-print hidden md:flex w-60 shrink-0 flex-col border-r border-ink-200 bg-white">
-        <div className="px-4 py-4 border-b border-ink-100">
-          <p className="text-sm font-semibold text-ink-900 truncate">{teacherName || "Teacher"}</p>
-          <p className="text-xs text-ink-400 truncate">{schoolName || "Prep School Hub"}</p>
+        <div className="px-4 py-4 border-b-2 border-brand-600">
+          <p className="font-serif text-lg font-semibold text-brand-800 leading-tight truncate">
+            {schoolName || "Prep School Hub"}
+          </p>
+          <p className="text-xs text-ink-400 truncate">{teacherName || "Teacher"}</p>
         </div>
         <nav className="flex-1 overflow-y-auto py-2">
           {NAV.map((item) => (

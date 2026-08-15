@@ -41,7 +41,7 @@ export function SearchPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold text-ink-900 mb-1">Search results for "{q}"</h1>
+      <h1 className="text-2xl font-semibold text-ink-900 mb-1">Search results for "{q}"</h1>
       <p className="text-sm text-ink-500 mb-4">{total} result{total === 1 ? "" : "s"}</p>
 
       <div className="space-y-5">

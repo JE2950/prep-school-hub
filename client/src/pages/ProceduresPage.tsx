@@ -58,7 +58,7 @@ export function ProceduresPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-semibold text-ink-900">Emergency & procedures reference</h1>
+          <h1 className="text-2xl font-semibold text-ink-900">Emergency & procedures reference</h1>
           <p className="text-sm text-ink-500 mt-0.5">A quick-reference for fire, lockdown, medical and safeguarding procedures.</p>
         </div>
         <button className="btn-primary" onClick={() => setModal({ editing: null })}>
