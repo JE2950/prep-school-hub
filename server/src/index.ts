@@ -13,6 +13,7 @@ import markbookRoutes from "./routes/markbook";
 import exportRoutes from "./routes/exports";
 import aiPromptRoutes from "./routes/aiPrompts";
 import uploadRoutes from "./routes/uploads";
+import importRoutes from "./routes/imports";
 import { requireAuth } from "./lib/requireAuth";
 
 const app = express();
@@ -45,6 +46,7 @@ app.use("/api/markbook", requireAuth, markbookRoutes);
 app.use("/api/exports", requireAuth, exportRoutes);
 app.use("/api/ai-prompts", requireAuth, aiPromptRoutes);
 app.use("/api/uploads", requireAuth, uploadRoutes);
+app.use("/api/imports", requireAuth, importRoutes);
 app.use("/api", requireAuth, resourceRoutes);
 
 if (isProd) {

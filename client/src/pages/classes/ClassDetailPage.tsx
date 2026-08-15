@@ -5,6 +5,7 @@ import { formatDate } from "../../lib/dates";
 import { Modal } from "../../components/Modal";
 import { FieldDef, ResourceForm } from "../../components/ResourceForm";
 import { AiPromptButton } from "../../components/AiPromptPanel";
+import { ImportExportBar } from "../../components/ImportExportBar";
 
 type Tab = "roster" | "sow" | "reflections" | "markbook" | "cover";
 
@@ -53,7 +54,7 @@ export function ClassDetailPage() {
       </Link>
       <div className="flex items-start justify-between mt-1 mb-4">
         <div>
-          <h1 className="text-xl font-semibold text-ink-900">
+          <h1 className="text-2xl font-semibold text-ink-900">
             {cls.name} <span className="text-ink-400 font-normal">· {cls.subject}</span>
           </h1>
           <p className="text-sm text-ink-500 mt-0.5">
@@ -131,6 +132,15 @@ function RosterTab({ cls, onChange }: { cls: any; onChange: () => void }) {
 
   return (
     <div className="card p-4">
+      <div className="mb-3">
+        <ImportExportBar
+          label="Roster"
+          templateUrl="/api/imports/pupils/template"
+          exportUrl="/api/imports/pupils/export"
+          importUrl={`/imports/class-roster/${cls.id}`}
+          onImported={onChange}
+        />
+      </div>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-ink-900">Pupil list ({cls.pupils.length})</h2>
         <button className="btn-secondary" onClick={() => setAdding(true)}>

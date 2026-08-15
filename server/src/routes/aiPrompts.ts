@@ -107,9 +107,16 @@ router.post("/parent-email", async (req, res) => {
   });
   if (!entry) return res.status(404).json({ error: "Communication log entry not found." });
 
+  const recipient = entry.pupil.parentEmail
+    ? `${entry.pupil.parentName ?? "Parent/guardian"} <${entry.pupil.parentEmail}>${
+        entry.pupil.parentEmail2 ? `, cc: ${entry.pupil.parentEmail2}` : ""
+      }`
+    : "no parent email on file yet — add one on the pupil's record";
+
   const prompt = `You are helping a UK prep school teacher draft a follow-up email to a parent, in British English, professional and warm in tone.
 
 Pupil: ${entry.pupil.firstName} ${entry.pupil.lastName}
+Send to: ${recipient}
 Previous contact: ${entry.method} on ${fmt(entry.date)}
 Summary of that contact: ${entry.summary}
 

@@ -3,6 +3,7 @@ import { api } from "../lib/api";
 import { formatDate } from "../lib/dates";
 import { Modal } from "../components/Modal";
 import { FieldDef, ResourceForm } from "../components/ResourceForm";
+import { ImportExportBar } from "../components/ImportExportBar";
 
 interface CalendarEvent {
   id: string;
@@ -168,7 +169,7 @@ export function CalendarPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold text-ink-900">Academic year calendar</h1>
+        <h1 className="text-2xl font-semibold text-ink-900">Academic year calendar</h1>
         <div className="flex gap-2">
           <button className={tab === "calendar" ? "btn-primary" : "btn-secondary"} onClick={() => setTab("calendar")}>
             Calendar
@@ -286,7 +287,14 @@ export function CalendarPage() {
         </>
       ) : (
         <div className="card p-4">
-          <div className="flex justify-end mb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <ImportExportBar
+              label="Term dates"
+              templateUrl="/api/imports/terms/template"
+              exportUrl="/api/imports/terms/export"
+              importUrl="/imports/terms"
+              onImported={load}
+            />
             <button className="btn-primary" onClick={() => setModal({ mode: "term", editing: null })}>
               + Add term
             </button>

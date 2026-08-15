@@ -68,6 +68,10 @@ model Pupil {
   firstName     String
   lastName      String
   dob           DateTime?
+  parentName    String?
+  parentEmail   String?
+  parentEmail2  String?
+  notes         String?
   tutorGroupId  String?
   tutorGroup    TutorGroup? @relation(fields: [tutorGroupId], references: [id])
   classes       ClassPupil[]
