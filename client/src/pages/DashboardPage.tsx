@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { daysUntil, DAY_NAMES, formatDate, formatDateLong, formatDateShort } from "../lib/dates";
+import { QuickLinksPanel } from "../components/QuickLinksPanel";
 
 interface DashboardData {
   date: string;
@@ -57,6 +58,8 @@ export function DashboardPage() {
         <h1 className="text-2xl font-semibold text-ink-900">{formatDateLong(data.date)}</h1>
         <span className="badge bg-brand-100 text-brand-800">Timetable Week {data.week}</span>
       </div>
+
+      <QuickLinksPanel />
 
       {/* Countdown strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

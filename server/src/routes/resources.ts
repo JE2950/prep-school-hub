@@ -4,6 +4,11 @@ import { crudRouter } from "../lib/crudFactory";
 const router = Router();
 
 router.use(
+  "/quick-links",
+  crudRouter("quickLink", { orderBy: { order: "asc" } })
+);
+
+router.use(
   "/terms",
   crudRouter("term", { orderBy: { startDate: "asc" }, softDelete: true })
 );

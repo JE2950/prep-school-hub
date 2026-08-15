@@ -25,6 +25,17 @@ model AppConfig {
   updatedAt    DateTime @updatedAt
 }
 
+// ---------- Dashboard quick links ----------
+
+model QuickLink {
+  id        String   @id @default(cuid())
+  label     String // e.g. CPOMS, iSAMS, SOCS
+  url       String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // ---------- Calendar / Terms ----------
 
 model Term {
