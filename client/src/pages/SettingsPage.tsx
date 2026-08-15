@@ -2,6 +2,8 @@ import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
+import { useNavConfig } from "../lib/NavConfigContext";
+import { NAV_ITEMS } from "../lib/navItems";
 import { Modal } from "../components/Modal";
 
 export function SettingsPage() {
@@ -39,6 +41,8 @@ export function SettingsPage() {
           <span className="text-ink-500">{schoolName}</span>
         </p>
       </div>
+
+      <SidebarCustomiseCard />
 
       <div className="card p-4">
         <h2 className="text-sm font-semibold text-ink-900 mb-3">Change passcode</h2>
@@ -165,6 +169,69 @@ function DemoDataCard() {
             </div>
           </div>
         </Modal>
+      )}
+    </div>
+  );
+}
+
+function SidebarCustomiseCard() {
+  const { order, hidden, loading, moveUp, moveDown, hide, show } = useNavConfig();
+
+  const items = order
+    .map((to) => NAV_ITEMS.find((item) => item.to === to))
+    .filter((item): item is (typeof NAV_ITEMS)[number] => !!item);
+
+  return (
+    <div className="card p-4 mb-4">
+      <h2 className="text-sm font-semibold text-ink-900 mb-1">Customise sidebar</h2>
+      <p className="text-sm text-ink-500 mb-3">
+        Reorder tabs or hide the ones you don't use — hidden tabs can be brought back here any time.
+      </p>
+      {loading ? (
+        <p className="text-sm text-ink-400">Loading…</p>
+      ) : (
+        <ul className="divide-y divide-ink-50">
+          {items.map((item, i) => {
+            const isHidden = hidden.includes(item.to);
+            return (
+              <li key={item.to} className="py-2 flex items-center gap-2">
+                <span className="text-sm flex-1 flex items-center gap-2 min-w-0">
+                  <span className="shrink-0">{item.icon}</span>
+                  <span className={`truncate ${isHidden ? "text-ink-400 line-through" : "text-ink-800"}`}>
+                    {item.label}
+                  </span>
+                </span>
+                <button
+                  className="text-xs text-ink-400 hover:text-ink-800 disabled:opacity-30 px-1"
+                  disabled={i === 0}
+                  onClick={() => moveUp(item.to)}
+                  aria-label="Move up"
+                >
+                  ↑
+                </button>
+                <button
+                  className="text-xs text-ink-400 hover:text-ink-800 disabled:opacity-30 px-1"
+                  disabled={i === items.length - 1}
+                  onClick={() => moveDown(item.to)}
+                  aria-label="Move down"
+                >
+                  ↓
+                </button>
+                {item.pinned ? (
+                  <span className="text-xs text-ink-300 w-16 text-right shrink-0">Always on</span>
+                ) : isHidden ? (
+                  <button className="btn-secondary !py-1 !px-2 text-xs shrink-0" onClick={() => show(item.to)}>
+                    Show
+                  </button>
+                ) : (
+                  <button className="btn-secondary !py-1 !px-2 text-xs shrink-0" onClick={() => hide(item.to)}>
+                    Hide
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

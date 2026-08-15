@@ -1,29 +1,20 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "../lib/AuthContext";
+import { useNavConfig } from "../lib/NavConfigContext";
+import { NAV_ITEMS } from "../lib/navItems";
 import { QuickAddModal } from "./QuickAddModal";
-import { api } from "../lib/api";
-
-const NAV = [
-  { to: "/", label: "Dashboard", icon: "🏠", end: true },
-  { to: "/calendar", label: "Calendar", icon: "📅" },
-  { to: "/classes", label: "Classes & Timetable", icon: "📚" },
-  { to: "/pupils", label: "Pupils", icon: "🧒" },
-  { to: "/planning", label: "Planning & Goals", icon: "🎯" },
-  { to: "/markbook", label: "Markbook & CE", icon: "📊" },
-  { to: "/cover-work", label: "Cover Work", icon: "🗒️" },
-  { to: "/pastoral", label: "Duties & Pastoral", icon: "🧑‍🤝‍🧑" },
-  { to: "/co-curricular", label: "Co-curricular", icon: "🏆" },
-  { to: "/cpd", label: "CPD & Career", icon: "🎓" },
-  { to: "/contacts", label: "Contacts", icon: "📇" },
-  { to: "/procedures", label: "Emergency Procedures", icon: "🚨" },
-];
 
 export function Layout() {
   const { teacherName, schoolName, logout } = useAuth();
+  const { order, hidden } = useNavConfig();
   const navigate = useNavigate();
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [query, setQuery] = useState("");
+
+  const visibleNav = order
+    .map((to) => NAV_ITEMS.find((item) => item.to === to))
+    .filter((item): item is (typeof NAV_ITEMS)[number] => !!item && !hidden.includes(item.to));
 
   function submitSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -40,7 +31,7 @@ export function Layout() {
           <p className="text-xs text-ink-400 truncate">{teacherName || "Teacher"}</p>
         </div>
         <nav className="flex-1 overflow-y-auto py-2">
-          {NAV.map((item) => (
+          {visibleNav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

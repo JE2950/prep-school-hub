@@ -16,6 +16,7 @@ import uploadRoutes from "./routes/uploads";
 import importRoutes from "./routes/imports";
 import recycleBinRoutes from "./routes/recycleBin";
 import demoRoutes from "./routes/demo";
+import settingsRoutes from "./routes/settings";
 import { requireAuth } from "./lib/requireAuth";
 
 const app = express();
@@ -51,6 +52,7 @@ app.use("/api/uploads", requireAuth, uploadRoutes);
 app.use("/api/imports", requireAuth, importRoutes);
 app.use("/api/recycle-bin", requireAuth, recycleBinRoutes);
 app.use("/api/demo", requireAuth, demoRoutes);
+app.use("/api/settings", requireAuth, settingsRoutes);
 app.use("/api", requireAuth, resourceRoutes);
 
 if (isProd) {
