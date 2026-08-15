@@ -1,6 +1,7 @@
 // Prep School Hub — data model
-// Note: SQLite has no native enum support in Prisma, so "enum-like" fields
-// are plain Strings; allowed values are validated in the API layer and
+// Note: "enum-like" fields are plain Strings rather than Prisma enums, so
+// switching providers (this started on SQLite, now Postgres) never requires
+// a schema rewrite; allowed values are validated in the API layer and
 // documented in comments next to each field.
 
 generator client {
@@ -8,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

@@ -17,6 +17,12 @@ import { requireAuth } from "./lib/requireAuth";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+const isProd = process.env.NODE_ENV === "production";
+
+// Render (and most hosts) sit behind a reverse proxy that terminates TLS —
+// without this, secure cookies and req.protocol would be judged on the
+// internal plain-HTTP hop rather than the real HTTPS connection.
+app.set("trust proxy", 1);
 
 app.use(
   cors({
@@ -40,6 +46,16 @@ app.use("/api/exports", requireAuth, exportRoutes);
 app.use("/api/ai-prompts", requireAuth, aiPromptRoutes);
 app.use("/api/uploads", requireAuth, uploadRoutes);
 app.use("/api", requireAuth, resourceRoutes);
+
+if (isProd) {
+  // Single-service deploy: this Express server also serves the built React
+  // app, so the whole thing runs as one web service on the host.
+  const clientDist = path.join(__dirname, "..", "..", "client", "dist");
+  app.use(express.static(clientDist));
+  app.get(/^(?!\/api|\/uploads).*/, (req, res) => {
+    res.sendFile(path.join(clientDist, "index.html"));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Prep School Hub API listening on http://localhost:${PORT}`);

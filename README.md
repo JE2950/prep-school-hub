@@ -7,31 +7,46 @@ CPD & career, contacts and emergency procedures, all in one private app.
 Built as a real full-stack app (not a single HTML file):
 
 - **Client**: React + TypeScript + Vite + Tailwind CSS, React Router
-- **Server**: Node.js + Express + TypeScript
-- **Database**: SQLite via Prisma (local file, `server/prisma/dev.db`)
-- **Auth**: single passcode you set on first run (hashed, stored locally — this app has one user: you)
+- **Server**: Node.js + Express + TypeScript — in production it also serves the built client,
+  so the whole app is one web service
+- **Database**: PostgreSQL via Prisma
+- **Auth**: single passcode you set on first run (hashed, stored in the database — this app has one user: you)
 
 The "AI assistant" panels don't call any external AI API. They build a ready-made prompt from
 your own data and let you copy it into Claude or ChatGPT yourself, so no API key or billing is needed.
 
-## Requirements
+## Hosting it live (Render)
 
-- Node.js 20+ (this was set up with Node 26 via Homebrew: `brew install node`)
+This repo includes a `render.yaml` Blueprint, so Render can provision the web service *and*
+a free Postgres database in one go, straight from GitHub — no terminal required. See
+`DEPLOY.md` for the exact click-through steps.
 
-## First-time setup
+## Local development
+
+### Requirements
+
+- Node.js 20+ (`brew install node`)
+- PostgreSQL (`brew install postgresql@16 && brew services start postgresql@16`)
+
+### First-time setup
 
 ```bash
+# create a local database once
+createuser prep_school_hub --pwprompt   # or use psql, see below
+createdb prep_school_hub -O prep_school_hub
+
 cd server
 npm install
-npx prisma migrate deploy   # creates server/prisma/dev.db
+npx prisma migrate deploy
 cd ../client
 npm install
 ```
 
-The server reads config from `server/.env` (already created, safe local defaults). If you ever
-deploy this somewhere other than your own machine, change `JWT_SECRET` to a long random string.
+`server/.env` already points at `postgresql://prep_school_hub:localdevpassword@localhost:5432/prep_school_hub`
+— update it if you used a different local username/password. If you ever deploy this
+somewhere yourself (outside the Render Blueprint), change `JWT_SECRET` to a long random string.
 
-## Running it
+### Running it
 
 Open two terminals:
 
@@ -46,13 +61,15 @@ npm run dev
 ```
 
 Then open **http://localhost:5173**. On first visit you'll be asked to set a passcode — that's
-what protects your data on this machine.
+what protects your data.
 
 ## Data & backups
 
-Everything lives in `server/prisma/dev.db` (SQLite) plus any uploaded files in `server/uploads/`.
-To back up your data, just copy those. To reset everything, delete `dev.db` and re-run
-`npx prisma migrate deploy`.
+Everything lives in the Postgres database, plus any uploaded files in `server/uploads/`
+(CPD certificates, career evidence). Locally, `pg_dump prep_school_hub > backup.sql` backs up
+your data. On Render's free tier, uploaded files do **not** persist across redeploys (the free
+plan has no persistent disk) — treat file uploads there as convenience, not long-term storage,
+until/unless you add a paid disk.
 
 ## Project layout
 
@@ -66,6 +83,8 @@ server/
 client/
   src/pages/              — one page/tab set per module in the spec
   src/components/         — shared Layout, Modal, generic CRUD table/form, AI prompt panel
+render.yaml               — Render Blueprint (web service + Postgres database)
+DEPLOY.md                 — click-through deployment guide
 ```
 
 ## Notes
