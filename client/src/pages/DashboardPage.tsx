@@ -7,6 +7,7 @@ import { QuickLinksPanel } from "../components/QuickLinksPanel";
 interface DashboardData {
   date: string;
   week: "A" | "B";
+  timetableSeason: "winter" | "summer";
   timetableToday: any[];
   dutiesToday: any[];
   trainingToday: any[];
@@ -56,7 +57,12 @@ export function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-semibold text-ink-900">{formatDateLong(data.date)}</h1>
-        <span className="badge bg-brand-100 text-brand-800">Timetable Week {data.week}</span>
+        <div className="flex items-center gap-2">
+          <span className="badge bg-brand-100 text-brand-800">Timetable Week {data.week}</span>
+          <Link to="/classes/timetable" className="badge bg-ink-100 text-ink-600 hover:bg-ink-200">
+            {data.timetableSeason === "summer" ? "☀️ Summer timetable" : "❄️ Winter timetable"}
+          </Link>
+        </div>
       </div>
 
       <QuickLinksPanel />
@@ -205,8 +211,8 @@ export function DashboardPage() {
       {/* Week at a glance */}
       <div className="card p-4">
         <h2 className="text-sm font-semibold text-ink-900 mb-3">Week at a glance</h2>
-        <div className="grid grid-cols-5 gap-2">
-          {[1, 2, 3, 4, 5].map((dow) => {
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {[1, 2, 3, 4, 5, 6].map((dow) => {
             const dayEvents = data.weekEvents.filter((e) => new Date(e.date).getDay() === dow % 7);
             const isToday = new Date(data.date).getDay() === dow % 7;
             return (

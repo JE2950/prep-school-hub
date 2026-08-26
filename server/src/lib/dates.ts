@@ -27,5 +27,5 @@ export function startOfWeek(d: Date): Date {
 }
 
 export function endOfWeek(d: Date): Date {
-  return endOfDay(addDays(startOfWeek(d), 4)); // Mon-Fri school week
+  return endOfDay(addDays(startOfWeek(d), 5)); // Mon-Sat school week (Saturday runs on Week A)
 }

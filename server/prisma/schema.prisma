@@ -16,14 +16,15 @@ datasource db {
 // ---------- App / Auth ----------
 
 model AppConfig {
-  id           Int      @id @default(1)
-  teacherName  String   @default("")
-  schoolName   String   @default("")
-  passcodeHash String
-  setupDone    Boolean  @default(false)
-  navConfig    Json? // sidebar customisation: { order: string[], hidden: string[] }
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                     Int      @id @default(1)
+  teacherName            String   @default("")
+  schoolName             String   @default("")
+  passcodeHash           String
+  setupDone              Boolean  @default(false)
+  navConfig              Json? // sidebar customisation: { order: string[], hidden: string[] }
+  activeTimetableSeason  String   @default("winter") // "winter" | "summer" — which timetable is currently in effect
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }
 
 // ---------- Dashboard quick links ----------
@@ -130,8 +131,9 @@ model ClassPupil {
 
 model TimetableSlot {
   id        String  @id @default(cuid())
-  dayOfWeek Int // 1 = Monday .. 5 = Friday
+  dayOfWeek Int // 1 = Monday .. 5 = Friday, 6 = Saturday (Saturday only runs on Week A)
   week      String? // A | B | null (single-week timetable)
+  season    String  @default("winter") // "winter" | "summer" — the timetable changes slightly between seasons
   startTime String // "09:00"
   endTime   String // "09:40"
   room      String?

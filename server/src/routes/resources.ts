@@ -60,7 +60,7 @@ router.use(
   crudRouter("timetableSlot", {
     include: { class: true },
     orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
-    filterKeys: ["classId"],
+    filterKeys: ["classId", "season"],
   })
 );
 

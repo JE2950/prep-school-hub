@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
@@ -43,6 +43,8 @@ export function SettingsPage() {
       </div>
 
       <SidebarCustomiseCard />
+
+      <TimetableSeasonCard />
 
       <div className="card p-4">
         <h2 className="text-sm font-semibold text-ink-900 mb-3">Change passcode</h2>
@@ -90,6 +92,64 @@ export function SettingsPage() {
       </div>
 
       <DemoDataCard />
+    </div>
+  );
+}
+
+function TimetableSeasonCard() {
+  const [season, setSeason] = useState<"winter" | "summer" | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api.get<{ season: "winter" | "summer" }>("/settings/timetable-season").then((r) => setSeason(r.season));
+  }, []);
+
+  async function choose(next: "winter" | "summer") {
+    if (next === season) return;
+    setSaving(true);
+    try {
+      await api.put("/settings/timetable-season", { season: next });
+      setSeason(next);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="card p-4 mb-4">
+      <h2 className="text-sm font-semibold text-ink-900 mb-1">Timetable</h2>
+      <p className="text-sm text-ink-500 mb-3">
+        The timetable changes slightly between terms — set up both versions in the{" "}
+        <Link to="/classes/timetable" className="text-brand-700 hover:underline">
+          timetable builder
+        </Link>
+        , then switch which one is active here (this also controls today's timetable on the dashboard, the
+        printable cover sheet, and the class detail pages).
+      </p>
+      {season === null ? (
+        <p className="text-sm text-ink-400">Loading…</p>
+      ) : (
+        <div className="inline-flex rounded-lg border border-ink-200 p-0.5 bg-ink-50">
+          <button
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors disabled:opacity-50 ${
+              season === "winter" ? "bg-white shadow-sm text-brand-800" : "text-ink-500 hover:text-ink-800"
+            }`}
+            disabled={saving}
+            onClick={() => choose("winter")}
+          >
+            ❄️ Winter timetable
+          </button>
+          <button
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors disabled:opacity-50 ${
+              season === "summer" ? "bg-white shadow-sm text-brand-800" : "text-ink-500 hover:text-ink-800"
+            }`}
+            disabled={saving}
+            onClick={() => choose("summer")}
+          >
+            ☀️ Summer timetable
+          </button>
+        </div>
+      )}
     </div>
   );
 }

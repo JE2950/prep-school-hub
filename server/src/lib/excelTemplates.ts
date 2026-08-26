@@ -227,16 +227,17 @@ export async function parseTermsWorkbook(buffer: Buffer): Promise<ParsedTermRow[
 
 // ---------- Timetable ----------
 
-const DAY_NAMES = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const DAY_NAMES = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const TIMETABLE_COLUMNS = [
   { header: "SlotID (leave blank for a new slot)", key: "id", width: 26 },
-  { header: "Day (Monday-Friday)", key: "day", width: 16 },
+  { header: "Day (Monday-Saturday)", key: "day", width: 16 },
   { header: "Week (A, B, or blank for every week)", key: "week", width: 24 },
   { header: "StartTime (HH:MM, 24hr)", key: "startTime", width: 18 },
   { header: "EndTime (HH:MM, 24hr)", key: "endTime", width: 18 },
   { header: "Class (must match an existing class exactly)", key: "className", width: 30 },
   { header: "Room", key: "room", width: 14 },
+  { header: "Season (Winter/Summer, blank = Winter)", key: "season", width: 30 },
 ];
 
 export async function buildTimetableWorkbook(slots: any[]): Promise<ExcelJS.Buffer> {
@@ -258,6 +259,7 @@ export async function buildTimetableWorkbook(slots: any[]): Promise<ExcelJS.Buff
       endTime: s.endTime,
       className: s.class?.name ?? "",
       room: s.room ?? "",
+      season: s.season === "summer" ? "Summer" : "Winter",
     });
   }
 
@@ -270,6 +272,7 @@ export async function buildTimetableWorkbook(slots: any[]): Promise<ExcelJS.Buff
       endTime: "09:40",
       className: "7L1",
       room: "L1",
+      season: "Winter",
     });
     sample.font = { italic: true, color: { argb: "FF8794A1" } };
   }
@@ -286,6 +289,7 @@ export interface ParsedTimetableRow {
   endTime: string | null;
   className: string | null;
   room: string | null;
+  season: string | null;
 }
 
 export async function parseTimetableWorkbook(buffer: Buffer): Promise<ParsedTimetableRow[]> {
@@ -309,6 +313,7 @@ export async function parseTimetableWorkbook(buffer: Buffer): Promise<ParsedTime
       endTime: cellToString(get(5)),
       className,
       room: cellToString(get(7)),
+      season: cellToString(get(8)),
     });
   });
 

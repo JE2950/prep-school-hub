@@ -20,4 +20,18 @@ router.put("/nav-config", async (req, res) => {
   res.json({ ok: true });
 });
 
+router.get("/timetable-season", async (req, res) => {
+  const config = await prisma.appConfig.findUnique({ where: { id: 1 } });
+  res.json({ season: config?.activeTimetableSeason ?? "winter" });
+});
+
+router.put("/timetable-season", async (req, res) => {
+  const { season } = req.body ?? {};
+  if (season !== "winter" && season !== "summer") {
+    return res.status(400).json({ error: "Season must be 'winter' or 'summer'." });
+  }
+  await prisma.appConfig.update({ where: { id: 1 }, data: { activeTimetableSeason: season } });
+  res.json({ ok: true, season });
+});
+
 export default router;

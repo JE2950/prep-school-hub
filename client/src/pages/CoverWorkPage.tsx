@@ -38,7 +38,9 @@ export function CoverWorkPage() {
 
       <div className="card p-6" id="cover-sheet">
         <h2 className="text-lg font-semibold text-ink-900 mb-1">Cover sheet — {formatDateLong(date)}</h2>
-        <p className="text-sm text-ink-500 mb-4">Timetable Week {data?.week ?? "—"}</p>
+        <p className="text-sm text-ink-500 mb-4">
+          Timetable Week {data?.week ?? "—"} · {data?.season === "summer" ? "Summer" : "Winter"} timetable
+        </p>
 
         {data && data.lessons.length === 0 && <p className="text-sm text-ink-400">No lessons scheduled this day.</p>}
 

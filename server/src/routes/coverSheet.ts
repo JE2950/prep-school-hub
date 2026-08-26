@@ -12,13 +12,15 @@ router.get("/", async (req, res) => {
   const date = req.query.date ? new Date(String(req.query.date)) : new Date();
   const dow = isoWeekday(date);
   const week = await getCurrentTimetableWeek(date);
+  const appConfig = await prisma.appConfig.findUnique({ where: { id: 1 } });
+  const season = appConfig?.activeTimetableSeason ?? "winter";
 
-  if (dow > 5) {
-    return res.json({ date, week, lessons: [] });
+  if (dow > 6) {
+    return res.json({ date, week, season, lessons: [] });
   }
 
   const slots = await prisma.timetableSlot.findMany({
-    where: { dayOfWeek: dow, OR: [{ week: null }, { week }] },
+    where: { dayOfWeek: dow, season, OR: [{ week: null }, { week }] },
     include: {
       class: {
         include: {
@@ -44,7 +46,7 @@ router.get("/", async (req, res) => {
     pupilNotes: slot.class.coverFolder?.pupilNotes ?? null,
   }));
 
-  res.json({ date, week, lessons });
+  res.json({ date, week, season, lessons });
 });
 
 export default router;

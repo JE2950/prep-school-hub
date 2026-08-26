@@ -9,14 +9,16 @@ router.get("/", async (req, res) => {
   const now = new Date();
   const today0 = startOfDay(now);
   const today1 = endOfDay(now);
-  const dow = isoWeekday(now); // 1-5 school days
+  const dow = isoWeekday(now); // 1-6 school days (Saturday runs on Week A only)
   const week = await getCurrentTimetableWeek(now);
+  const appConfig = await prisma.appConfig.findUnique({ where: { id: 1 } });
+  const timetableSeason = appConfig?.activeTimetableSeason ?? "winter";
 
   const [timetableToday, dutiesToday, trainingToday, fixturesToday, tasks, upcomingEvents, weekEvents] =
     await Promise.all([
-      dow <= 5
+      dow <= 6
         ? prisma.timetableSlot.findMany({
-            where: { dayOfWeek: dow, OR: [{ week: null }, { week }] },
+            where: { dayOfWeek: dow, season: timetableSeason, OR: [{ week: null }, { week }] },
             include: { class: true },
             orderBy: { startTime: "asc" },
           })
@@ -98,6 +100,7 @@ router.get("/", async (req, res) => {
   res.json({
     date: now,
     week,
+    timetableSeason,
     timetableToday,
     dutiesToday,
     trainingToday,

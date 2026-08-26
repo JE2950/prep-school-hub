@@ -141,6 +141,7 @@ export async function buildFullBackupWorkbook(prisma: PrismaClient): Promise<Exc
     [
       { header: "Day", key: "day" },
       { header: "Week", key: "week" },
+      { header: "Season", key: "season" },
       { header: "StartTime", key: "startTime" },
       { header: "EndTime", key: "endTime" },
       { header: "Class", key: "className" },
@@ -149,6 +150,7 @@ export async function buildFullBackupWorkbook(prisma: PrismaClient): Promise<Exc
     slots.map((s) => ({
       day: DAY_NAMES[s.dayOfWeek] ?? "",
       week: s.week ?? "",
+      season: s.season === "summer" ? "Summer" : "Winter",
       startTime: s.startTime,
       endTime: s.endTime,
       className: s.class.name,

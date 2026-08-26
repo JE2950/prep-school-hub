@@ -21,6 +21,7 @@ const DAY_NUMBERS: Record<string, number> = {
   wednesday: 3,
   thursday: 4,
   friday: 5,
+  saturday: 6,
 };
 
 // ---------- Pupils ----------
@@ -253,7 +254,7 @@ router.post("/timetable", upload.single("file"), async (req, res) => {
   for (const row of rows) {
     const dayNumber = DAY_NUMBERS[(row.day ?? "").toLowerCase()];
     if (!dayNumber) {
-      summary.errors.push({ row: row.rowNumber, message: `Day must be Monday-Friday (got "${row.day ?? ""}").` });
+      summary.errors.push({ row: row.rowNumber, message: `Day must be Monday-Saturday (got "${row.day ?? ""}").` });
       continue;
     }
     if (!row.startTime || !TIME_FORMAT.test(row.startTime) || !row.endTime || !TIME_FORMAT.test(row.endTime)) {
@@ -270,6 +271,12 @@ router.post("/timetable", upload.single("file"), async (req, res) => {
       summary.errors.push({ row: row.rowNumber, message: `Week must be A, B, or blank (got "${row.week}").` });
       continue;
     }
+    const seasonRaw = (row.season ?? "").toLowerCase();
+    if (seasonRaw && seasonRaw !== "winter" && seasonRaw !== "summer") {
+      summary.errors.push({ row: row.rowNumber, message: `Season must be Winter, Summer, or blank (got "${row.season}").` });
+      continue;
+    }
+    const season = seasonRaw === "summer" ? "summer" : "winter"; // blank defaults to winter
 
     const data = {
       dayOfWeek: dayNumber,
@@ -278,6 +285,7 @@ router.post("/timetable", upload.single("file"), async (req, res) => {
       endTime: row.endTime,
       classId,
       room: row.room ?? null,
+      season,
     };
 
     const existing = row.id ? await prisma.timetableSlot.findUnique({ where: { id: row.id } }) : null;
