@@ -104,7 +104,7 @@ model Pupil {
 model Class {
   id             String   @id @default(cuid())
   name           String // e.g. 7L1
-  subject        String // e.g. Latin, French, TPR
+  subject        String   @default("") // e.g. Latin, French, TPR — blank when auto-created from a timetable import, fill in after
   yearGroup      String?
   currentTopic   String?
   notes          String?

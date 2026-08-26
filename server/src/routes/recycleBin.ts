@@ -21,7 +21,7 @@ const REGISTRY: {
   label: (row: any) => string;
 }[] = [
   { model: "pupil", category: "Pupil", label: (p) => `${p.firstName} ${p.lastName}` },
-  { model: "class", category: "Class", label: (c) => `${c.name} (${c.subject})` },
+  { model: "class", category: "Class", label: (c) => (c.subject ? `${c.name} (${c.subject})` : c.name) },
   { model: "tutorGroup", category: "Tutor group", label: (t) => t.name },
   { model: "team", category: "Team", label: (t) => t.name },
   { model: "contact", category: "Contact", label: (c) => c.name },

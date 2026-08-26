@@ -249,7 +249,12 @@ router.post("/timetable", upload.single("file"), async (req, res) => {
   const classes = await prisma.class.findMany();
   const classByName = new Map(classes.map((c) => [c.name.toLowerCase(), c.id]));
 
-  const summary = { created: 0, updated: 0, errors: [] as { row: number; message: string }[] };
+  const summary = {
+    created: 0,
+    updated: 0,
+    classesCreated: [] as string[],
+    errors: [] as { row: number; message: string }[],
+  };
 
   for (const row of rows) {
     const dayNumber = DAY_NUMBERS[(row.day ?? "").toLowerCase()];
@@ -261,10 +266,20 @@ router.post("/timetable", upload.single("file"), async (req, res) => {
       summary.errors.push({ row: row.rowNumber, message: "Start/end time must be in HH:MM 24-hour format." });
       continue;
     }
-    const classId = row.className ? classByName.get(row.className.toLowerCase()) : undefined;
-    if (!classId) {
-      summary.errors.push({ row: row.rowNumber, message: `No class found named "${row.className ?? ""}".` });
+    const className = row.className?.trim();
+    if (!className) {
+      summary.errors.push({ row: row.rowNumber, message: "Class name is required." });
       continue;
+    }
+    // A class named in the timetable but not seen before is created on the fly —
+    // with just a name, so it shows up right away for the teacher to fill in the
+    // subject, year group etc. from the Classes page.
+    let classId = classByName.get(className.toLowerCase());
+    if (!classId) {
+      const newClass = await prisma.class.create({ data: { name: className } });
+      classId = newClass.id;
+      classByName.set(className.toLowerCase(), classId);
+      summary.classesCreated.push(className);
     }
     const week = row.week?.toUpperCase();
     if (week && week !== "A" && week !== "B") {

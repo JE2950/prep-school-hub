@@ -7,6 +7,7 @@ interface ImportSummary {
   updated: number;
   linked?: number;
   tutorGroupsCreated?: string[];
+  classesCreated?: string[];
   errors: { row: number; message: string }[];
 }
 
@@ -68,6 +69,12 @@ export function ImportExportBar({
             </p>
             {summary.tutorGroupsCreated && summary.tutorGroupsCreated.length > 0 && (
               <p className="text-ink-600">New tutor groups created: {summary.tutorGroupsCreated.join(", ")}</p>
+            )}
+            {summary.classesCreated && summary.classesCreated.length > 0 && (
+              <p className="text-ink-600">
+                New classes created: {summary.classesCreated.join(", ")} — add subject, year group etc. from the
+                Classes page.
+              </p>
             )}
             {summary.errors.length > 0 && (
               <div className="rounded-lg bg-red-50 border border-red-200 p-3">

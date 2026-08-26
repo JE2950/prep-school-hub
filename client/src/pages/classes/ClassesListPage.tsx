@@ -63,7 +63,10 @@ export function ClassesListPage() {
               <h3 className="font-semibold text-ink-900">{c.name}</h3>
               <span className="badge bg-ink-100 text-ink-600">{c.pupils.length} pupils</span>
             </div>
-            <p className="text-sm text-ink-500">{c.subject}{c.yearGroup ? ` · Year ${c.yearGroup}` : ""}</p>
+            <p className="text-sm text-ink-500">
+              {c.subject || <span className="italic text-amber-600">Subject not set</span>}
+              {c.yearGroup ? ` · Year ${c.yearGroup}` : ""}
+            </p>
             {c.currentTopic && <p className="text-xs text-ink-400 mt-2 truncate">Topic: {c.currentTopic}</p>}
           </Link>
         ))}

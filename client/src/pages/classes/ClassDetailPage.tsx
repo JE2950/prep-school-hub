@@ -55,7 +55,12 @@ export function ClassDetailPage() {
       <div className="flex items-start justify-between mt-1 mb-4">
         <div>
           <h1 className="text-2xl font-semibold text-ink-900">
-            {cls.name} <span className="text-ink-400 font-normal">· {cls.subject}</span>
+            {cls.name}{" "}
+            {cls.subject ? (
+              <span className="text-ink-400 font-normal">· {cls.subject}</span>
+            ) : (
+              <span className="text-amber-600 font-normal text-base">· subject not set — click "Edit class" to add it</span>
+            )}
           </h1>
           <p className="text-sm text-ink-500 mt-0.5">
             {cls.currentTopic ? `Current topic: ${cls.currentTopic}` : "No current topic set"}

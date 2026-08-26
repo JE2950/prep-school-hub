@@ -76,7 +76,7 @@ export function TimetableBuilderPage() {
       label: "Class",
       type: "select",
       required: true,
-      options: classes.map((c) => ({ value: c.id, label: `${c.name} (${c.subject})` })),
+      options: classes.map((c) => ({ value: c.id, label: c.subject ? `${c.name} (${c.subject})` : c.name })),
     },
     {
       key: "dayOfWeek",

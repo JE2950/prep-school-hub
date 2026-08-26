@@ -25,7 +25,7 @@ router.post("/cover-lesson", async (req, res) => {
 
   const prompt = `You are helping a UK prep school teacher write a self-contained cover lesson.
 
-Class: ${cls.name} (${cls.subject})
+Class: ${cls.name}${cls.subject ? ` (${cls.subject})` : ""}
 Current topic: ${cls.currentTopic ?? "not set"}
 Standing cover lesson notes: ${cls.coverFolder?.standingCoverLesson ?? "none on file"}
 Next scheme of work topic (not yet taught): ${nextTopic?.title ?? "none listed"}
@@ -145,7 +145,7 @@ router.post("/sow-next-steps", async (req, res) => {
 
   const prompt = `You are helping a UK prep school teacher plan their next few lessons.
 
-Class: ${cls.name} (${cls.subject})
+Class: ${cls.name}${cls.subject ? ` (${cls.subject})` : ""}
 Topics already taught/assessed, in order: ${taught.map((t) => t.title).join(", ") || "none yet"}
 Topics still to teach: ${remaining.map((t) => t.title).join(", ") || "none listed"}
 
