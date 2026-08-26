@@ -18,8 +18,11 @@ interface DashboardData {
   countdown: {
     term: string | null;
     nextHalfTerm: string | null;
+    nextHalfTermTimeLabel: string | null;
     endOfTerm: string | null;
+    endOfTermTimeLabel: string | null;
     nextTermStart: string | null;
+    nextTermStartTimeLabel: string | null;
   };
 }
 
@@ -79,7 +82,10 @@ export function DashboardPage() {
             {halfTermDays !== null ? `${halfTermDays} day${halfTermDays === 1 ? "" : "s"}` : "—"}
           </p>
           {data.countdown.nextHalfTerm && (
-            <p className="text-xs text-ink-400">{formatDate(data.countdown.nextHalfTerm)}</p>
+            <p className="text-xs text-ink-400">
+              {formatDate(data.countdown.nextHalfTerm)}
+              {data.countdown.nextHalfTermTimeLabel ? ` · ${data.countdown.nextHalfTermTimeLabel}` : ""}
+            </p>
           )}
         </div>
         <div className="card p-4">
@@ -95,7 +101,13 @@ export function DashboardPage() {
               ? `${nextTermDays} day${nextTermDays === 1 ? "" : "s"}`
               : "—"}
           </p>
-          <p className="text-xs text-ink-400">{formatDate(data.countdown.endOfTerm ?? data.countdown.nextTermStart)}</p>
+          <p className="text-xs text-ink-400">
+            {formatDate(data.countdown.endOfTerm ?? data.countdown.nextTermStart)}
+            {(() => {
+              const label = data.countdown.endOfTerm ? data.countdown.endOfTermTimeLabel : data.countdown.nextTermStartTimeLabel;
+              return label ? ` · ${label}` : "";
+            })()}
+          </p>
         </div>
       </div>
 

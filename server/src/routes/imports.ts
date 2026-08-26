@@ -3,10 +3,10 @@ import multer from "multer";
 import { prisma } from "../lib/prisma";
 import {
   buildPupilsWorkbook,
-  buildTermsWorkbook,
+  buildTermsAndEventsWorkbook,
   buildTimetableWorkbook,
   parsePupilsWorkbook,
-  parseTermsWorkbook,
+  parseTermsAndEventsWorkbook,
   parseTimetableWorkbook,
   ParsedPupilRow,
 } from "../lib/excelTemplates";
@@ -146,50 +146,55 @@ router.post("/class-roster/:classId", upload.single("file"), async (req, res) =>
   res.json(summary);
 });
 
-// ---------- Terms ----------
+// ---------- Term dates & calendar events (one workbook, two tabs) ----------
 
-router.get("/terms/template", async (req, res) => {
-  const buffer = await buildTermsWorkbook([]);
+const CALENDAR_CATEGORIES = ["academic", "sport", "pastoral", "admin", "personal"];
+
+router.get("/term-calendar/template", async (req, res) => {
+  const buffer = await buildTermsAndEventsWorkbook([], []);
   res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-  res.setHeader("Content-Disposition", 'attachment; filename="term-dates-template.xlsx"');
+  res.setHeader("Content-Disposition", 'attachment; filename="term-dates-and-calendar-template.xlsx"');
   res.send(Buffer.from(buffer));
 });
 
-router.get("/terms/export", async (req, res) => {
-  const terms = await prisma.term.findMany({ orderBy: { startDate: "asc" } });
-  const buffer = await buildTermsWorkbook(terms);
+router.get("/term-calendar/export", async (req, res) => {
+  const [terms, events] = await Promise.all([
+    prisma.term.findMany({ where: { deletedAt: null }, orderBy: { startDate: "asc" } }),
+    prisma.calendarEvent.findMany({ where: { deletedAt: null }, orderBy: { date: "asc" } }),
+  ]);
+  const buffer = await buildTermsAndEventsWorkbook(terms, events);
   res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-  res.setHeader("Content-Disposition", 'attachment; filename="term-dates-export.xlsx"');
+  res.setHeader("Content-Disposition", 'attachment; filename="term-dates-and-calendar-export.xlsx"');
   res.send(Buffer.from(buffer));
 });
 
-router.post("/terms", upload.single("file"), async (req, res) => {
+router.post("/term-calendar", upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded." });
-  let rows;
+  let parsed;
   try {
-    rows = await parseTermsWorkbook(req.file.buffer);
+    parsed = await parseTermsAndEventsWorkbook(req.file.buffer);
   } catch {
     return res.status(400).json({ error: "Could not read that file — make sure it's the .xlsx template." });
   }
 
   const summary = { created: 0, updated: 0, errors: [] as { row: number; message: string }[] };
 
-  for (const row of rows) {
+  for (const row of parsed.terms) {
     const canonicalTerm = TERM_NAMES.find((t) => t.toLowerCase() === (row.term ?? "").toLowerCase());
     if (!canonicalTerm) {
-      summary.errors.push({ row: row.rowNumber, message: `Term must be Michaelmas, Lent or Summer (got "${row.term ?? ""}").` });
+      summary.errors.push({ row: 0, message: `Term dates, row ${row.rowNumber}: term must be Michaelmas, Lent or Summer (got "${row.term ?? ""}").` });
       continue;
     }
     if (!row.academicYear) {
-      summary.errors.push({ row: row.rowNumber, message: "Academic year is required." });
+      summary.errors.push({ row: 0, message: `Term dates, row ${row.rowNumber}: academic year is required.` });
       continue;
     }
     if (row.startDate === "invalid" || row.endDate === "invalid" || row.halfTermStart === "invalid" || row.halfTermEnd === "invalid") {
-      summary.errors.push({ row: row.rowNumber, message: "Could not read a date — use DD/MM/YYYY." });
+      summary.errors.push({ row: 0, message: `Term dates, row ${row.rowNumber}: could not read a date — use DD/MM/YYYY.` });
       continue;
     }
     if (!row.startDate || !row.endDate) {
-      summary.errors.push({ row: row.rowNumber, message: "Start date and end date are required." });
+      summary.errors.push({ row: 0, message: `Term dates, row ${row.rowNumber}: start date and end date are required.` });
       continue;
     }
 
@@ -200,6 +205,10 @@ router.post("/terms", upload.single("file"), async (req, res) => {
       endDate: row.endDate,
       halfTermStart: row.halfTermStart ?? null,
       halfTermEnd: row.halfTermEnd ?? null,
+      startTimeLabel: row.startTimeLabel || null,
+      endTimeLabel: row.endTimeLabel || null,
+      halfTermStartTimeLabel: row.halfTermStartTimeLabel || null,
+      halfTermEndTimeLabel: row.halfTermEndTimeLabel || null,
     };
 
     const existing = row.id ? await prisma.term.findUnique({ where: { id: row.id } }) : null;
@@ -212,9 +221,53 @@ router.post("/terms", upload.single("file"), async (req, res) => {
     }
   }
 
+  for (const row of parsed.events) {
+    if (!row.title) {
+      summary.errors.push({ row: 0, message: `Calendar events, row ${row.rowNumber}: title is required.` });
+      continue;
+    }
+    if (row.startDate === "invalid" || row.endDate === "invalid") {
+      summary.errors.push({ row: 0, message: `Calendar events, row ${row.rowNumber}: could not read a date — use DD/MM/YYYY.` });
+      continue;
+    }
+    if (!row.startDate) {
+      summary.errors.push({ row: 0, message: `Calendar events, row ${row.rowNumber}: start date is required.` });
+      continue;
+    }
+    const categoryRaw = (row.category ?? "").toLowerCase() || "pastoral"; // exeats etc. default to pastoral
+    if (!CALENDAR_CATEGORIES.includes(categoryRaw)) {
+      summary.errors.push({
+        row: 0,
+        message: `Calendar events, row ${row.rowNumber}: category must be one of ${CALENDAR_CATEGORIES.join(", ")} or blank (got "${row.category}").`,
+      });
+      continue;
+    }
+
+    const data = {
+      title: row.title,
+      category: categoryRaw,
+      type: row.type?.trim() || null,
+      date: row.startDate,
+      startTimeLabel: row.startTimeLabel || null,
+      endDate: row.endDate || null,
+      endTimeLabel: row.endTimeLabel || null,
+      notes: row.notes ?? null,
+    };
+
+    const existing = row.id ? await prisma.calendarEvent.findUnique({ where: { id: row.id } }) : null;
+    if (existing) {
+      await prisma.calendarEvent.update({ where: { id: existing.id }, data });
+      summary.updated++;
+    } else {
+      await prisma.calendarEvent.create({ data });
+      summary.created++;
+    }
+  }
+
   res.json(summary);
 });
 
+// ---------- Timetable ----------
 // ---------- Timetable ----------
 
 const TIME_FORMAT = /^([01]?\d|2[0-3]):([0-5]\d)$/;

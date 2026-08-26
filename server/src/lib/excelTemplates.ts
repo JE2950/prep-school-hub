@@ -137,7 +137,7 @@ export async function parsePupilsWorkbook(buffer: Buffer): Promise<ParsedPupilRo
   return rows;
 }
 
-// ---------- Terms ----------
+// ---------- Terms & calendar events (one workbook, two sheets) ----------
 
 const TERM_COLUMNS = [
   { header: "TermID (leave blank for a new term)", key: "id", width: 26 },
@@ -147,11 +147,29 @@ const TERM_COLUMNS = [
   { header: "EndDate (DD/MM/YYYY)", key: "endDate", width: 18 },
   { header: "HalfTermStart (DD/MM/YYYY)", key: "halfTermStart", width: 20 },
   { header: "HalfTermEnd (DD/MM/YYYY)", key: "halfTermEnd", width: 20 },
+  { header: "StartTime (free text, e.g. 12 noon)", key: "startTimeLabel", width: 26 },
+  { header: "EndTime (free text, e.g. 12 noon)", key: "endTimeLabel", width: 26 },
+  { header: "HalfTermStartTime (e.g. 12 noon)", key: "halfTermStartTimeLabel", width: 26 },
+  { header: "HalfTermEndTime (e.g. 8.30am)", key: "halfTermEndTimeLabel", width: 26 },
 ];
 
-export async function buildTermsWorkbook(terms: any[]): Promise<ExcelJS.Buffer> {
-  const wb = new ExcelJS.Workbook();
-  const sheet = wb.addWorksheet("Term dates");
+const CALENDAR_EVENT_COLUMNS = [
+  { header: "EventID (leave blank for a new entry)", key: "id", width: 26 },
+  { header: "Title", key: "title", width: 30 },
+  { header: "Category (academic/sport/pastoral/admin/personal)", key: "category", width: 30 },
+  { header: "Type (exeat/inset/exam/ce/scholarship/report-deadline/parents-evening/other, or blank)", key: "type", width: 34 },
+  { header: "StartDate (DD/MM/YYYY)", key: "startDate", width: 18 },
+  { header: "StartTime (free text, e.g. 12 noon)", key: "startTimeLabel", width: 26 },
+  { header: "EndDate (DD/MM/YYYY, blank for a single day)", key: "endDate", width: 26 },
+  { header: "EndTime (free text, e.g. 7.00pm)", key: "endTimeLabel", width: 26 },
+  { header: "Notes", key: "notes", width: 34 },
+];
+
+const TERM_SHEET_NAME = "Term dates";
+const CALENDAR_EVENT_SHEET_NAME = "Calendar events";
+
+function addTermsSheet(wb: ExcelJS.Workbook, terms: any[]) {
+  const sheet = wb.addWorksheet(TERM_SHEET_NAME);
   sheet.columns = TERM_COLUMNS;
   styleHeaderRow(sheet.getRow(1));
 
@@ -166,6 +184,10 @@ export async function buildTermsWorkbook(terms: any[]): Promise<ExcelJS.Buffer> 
       endDate: t.endDate,
       halfTermStart: t.halfTermStart ?? null,
       halfTermEnd: t.halfTermEnd ?? null,
+      startTimeLabel: t.startTimeLabel ?? "",
+      endTimeLabel: t.endTimeLabel ?? "",
+      halfTermStartTimeLabel: t.halfTermStartTimeLabel ?? "",
+      halfTermEndTimeLabel: t.halfTermEndTimeLabel ?? "",
     });
     for (const c of dateCols) if (row.getCell(c).value) row.getCell(c).numFmt = DATE_FORMAT;
   }
@@ -179,11 +201,61 @@ export async function buildTermsWorkbook(terms: any[]): Promise<ExcelJS.Buffer> 
       endDate: new Date(Date.UTC(2026, 11, 15)),
       halfTermStart: new Date(Date.UTC(2026, 9, 24)),
       halfTermEnd: new Date(Date.UTC(2026, 10, 1)),
+      startTimeLabel: "12 noon",
+      endTimeLabel: "12 noon",
+      halfTermStartTimeLabel: "12 noon",
+      halfTermEndTimeLabel: "8.30am",
     });
     for (const c of dateCols) sample.getCell(c).numFmt = DATE_FORMAT;
     sample.font = { italic: true, color: { argb: "FF8794A1" } };
   }
+}
 
+function addCalendarEventsSheet(wb: ExcelJS.Workbook, events: any[]) {
+  const sheet = wb.addWorksheet(CALENDAR_EVENT_SHEET_NAME);
+  sheet.columns = CALENDAR_EVENT_COLUMNS;
+  styleHeaderRow(sheet.getRow(1));
+
+  const dateCols = ["startDate", "endDate"];
+
+  for (const e of events) {
+    const row = sheet.addRow({
+      id: e.id,
+      title: e.title,
+      category: e.category,
+      type: e.type ?? "",
+      startDate: e.date,
+      startTimeLabel: e.startTimeLabel ?? "",
+      endDate: e.endDate ?? null,
+      endTimeLabel: e.endTimeLabel ?? "",
+      notes: e.notes ?? "",
+    });
+    for (const c of dateCols) if (row.getCell(c).value) row.getCell(c).numFmt = DATE_FORMAT;
+  }
+
+  if (events.length === 0) {
+    const sample = sheet.addRow({
+      id: "",
+      title: "Exeat Weekend",
+      category: "pastoral",
+      type: "exeat",
+      startDate: new Date(Date.UTC(2026, 8, 18)),
+      startTimeLabel: "12 noon",
+      endDate: new Date(Date.UTC(2026, 8, 20)),
+      endTimeLabel: "7.00pm",
+      notes: "Example row — delete before uploading",
+    });
+    for (const c of dateCols) sample.getCell(c).numFmt = DATE_FORMAT;
+    sample.font = { italic: true, color: { argb: "FF8794A1" } };
+  }
+}
+
+// One workbook, two tabs — "Term dates" and "Calendar events" — so there's a single
+// file to download, fill in and re-upload for the whole academic year's dates.
+export async function buildTermsAndEventsWorkbook(terms: any[], events: any[]): Promise<ExcelJS.Buffer> {
+  const wb = new ExcelJS.Workbook();
+  addTermsSheet(wb, terms);
+  addCalendarEventsSheet(wb, events);
   return wb.xlsx.writeBuffer();
 }
 
@@ -196,13 +268,15 @@ export interface ParsedTermRow {
   endDate: Date | null | "invalid";
   halfTermStart: Date | null | "invalid";
   halfTermEnd: Date | null | "invalid";
+  startTimeLabel: string | null;
+  endTimeLabel: string | null;
+  halfTermStartTimeLabel: string | null;
+  halfTermEndTimeLabel: string | null;
 }
 
-export async function parseTermsWorkbook(buffer: Buffer): Promise<ParsedTermRow[]> {
-  const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(buffer as any);
-  const sheet = wb.worksheets[0];
+function parseTermsSheet(sheet: ExcelJS.Worksheet | undefined): ParsedTermRow[] {
   const rows: ParsedTermRow[] = [];
+  if (!sheet) return rows;
 
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
@@ -219,10 +293,71 @@ export async function parseTermsWorkbook(buffer: Buffer): Promise<ParsedTermRow[
       endDate: cellToUkDate(get(5)),
       halfTermStart: cellToUkDate(get(6)),
       halfTermEnd: cellToUkDate(get(7)),
+      startTimeLabel: cellToString(get(8)),
+      endTimeLabel: cellToString(get(9)),
+      halfTermStartTimeLabel: cellToString(get(10)),
+      halfTermEndTimeLabel: cellToString(get(11)),
     });
   });
 
   return rows;
+}
+
+export interface ParsedCalendarEventRow {
+  rowNumber: number;
+  id: string | null;
+  title: string | null;
+  category: string | null;
+  type: string | null;
+  startDate: Date | null | "invalid";
+  startTimeLabel: string | null;
+  endDate: Date | null | "invalid";
+  endTimeLabel: string | null;
+  notes: string | null;
+}
+
+function parseCalendarEventsSheet(sheet: ExcelJS.Worksheet | undefined): ParsedCalendarEventRow[] {
+  const rows: ParsedCalendarEventRow[] = [];
+  if (!sheet) return rows;
+
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return;
+    const get = (col: number) => row.getCell(col).value;
+    const title = cellToString(get(2));
+    const startDateRaw = get(5);
+    if (!title && (startDateRaw === null || startDateRaw === undefined || startDateRaw === "")) return; // blank row
+    rows.push({
+      rowNumber,
+      id: cellToString(get(1)),
+      title,
+      category: cellToString(get(3)),
+      type: cellToString(get(4)),
+      startDate: cellToUkDate(get(5)),
+      startTimeLabel: cellToString(get(6)),
+      endDate: cellToUkDate(get(7)),
+      endTimeLabel: cellToString(get(8)),
+      notes: cellToString(get(9)),
+    });
+  });
+
+  return rows;
+}
+
+// Sheets are matched by name first (robust to the user reordering tabs), falling
+// back to position (1st sheet = terms, 2nd = events) for older exports.
+export async function parseTermsAndEventsWorkbook(
+  buffer: Buffer
+): Promise<{ terms: ParsedTermRow[]; events: ParsedCalendarEventRow[] }> {
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buffer as any);
+
+  const termSheet = wb.getWorksheet(TERM_SHEET_NAME) ?? wb.worksheets[0];
+  const eventSheet = wb.getWorksheet(CALENDAR_EVENT_SHEET_NAME) ?? wb.worksheets[1];
+
+  return {
+    terms: parseTermsSheet(termSheet),
+    events: parseCalendarEventsSheet(eventSheet === termSheet ? undefined : eventSheet),
+  };
 }
 
 // ---------- Timetable ----------

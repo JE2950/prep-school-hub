@@ -41,30 +41,36 @@ model QuickLink {
 // ---------- Calendar / Terms ----------
 
 model Term {
-  id             String   @id @default(cuid())
-  name           String // Michaelmas | Lent | Summer
-  academicYear   String // e.g. "2025/26"
-  startDate      DateTime
-  endDate        DateTime
-  halfTermStart  DateTime?
-  halfTermEnd    DateTime?
-  deletedAt      DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                     String    @id @default(cuid())
+  name                   String // Michaelmas | Lent | Summer
+  academicYear           String // e.g. "2025/26"
+  startDate              DateTime
+  startTimeLabel         String? // free text, e.g. "12 noon"
+  endDate                DateTime
+  endTimeLabel           String? // free text, e.g. "12 noon"
+  halfTermStart          DateTime?
+  halfTermStartTimeLabel String? // free text, e.g. "12 noon"
+  halfTermEnd            DateTime?
+  halfTermEndTimeLabel   String? // free text, e.g. "8.30am"
+  deletedAt              DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 }
 
 model CalendarEvent {
-  id        String   @id @default(cuid())
-  title     String
-  date      DateTime
-  endDate   DateTime?
-  allDay    Boolean  @default(true)
-  category  String // academic | sport | pastoral | admin | personal
-  type      String? // exeat | inset | exam | report-deadline | parents-evening | ce | scholarship | fixture | other
-  notes     String?
-  deletedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  title          String
+  date           DateTime
+  startTimeLabel String? // free text, e.g. "12 noon" — exeats etc. rarely have a clean HH:MM
+  endDate        DateTime?
+  endTimeLabel   String? // free text, e.g. "7.00pm" or "8.30am"
+  allDay         Boolean  @default(true)
+  category       String // academic | sport | pastoral | admin | personal
+  type           String? // exeat | inset | exam | report-deadline | parents-evening | ce | scholarship | fixture | other
+  notes          String?
+  deletedAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 // ---------- Classes / Pupils / Timetable ----------

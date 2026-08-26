@@ -9,7 +9,9 @@ interface CalendarEvent {
   id: string;
   title: string;
   date: string;
+  startTimeLabel: string | null;
   endDate: string | null;
+  endTimeLabel: string | null;
   category: string;
   type: string | null;
   notes: string | null;
@@ -20,9 +22,13 @@ interface Term {
   name: string;
   academicYear: string;
   startDate: string;
+  startTimeLabel: string | null;
   endDate: string;
+  endTimeLabel: string | null;
   halfTermStart: string | null;
+  halfTermStartTimeLabel: string | null;
   halfTermEnd: string | null;
+  halfTermEndTimeLabel: string | null;
 }
 
 const CATEGORY_COLOUR: Record<string, string> = {
@@ -35,8 +41,10 @@ const CATEGORY_COLOUR: Record<string, string> = {
 
 const eventFields: FieldDef[] = [
   { key: "title", label: "Title", type: "text", required: true, span: 2 },
-  { key: "date", label: "Date", type: "date", required: true },
-  { key: "endDate", label: "End date (optional)", type: "date" },
+  { key: "date", label: "Start date", type: "date", required: true, span: 1 },
+  { key: "startTimeLabel", label: "Start time (e.g. 12 noon)", type: "text", span: 1 },
+  { key: "endDate", label: "End date (optional, for multi-day entries)", type: "date", span: 1 },
+  { key: "endTimeLabel", label: "End time (e.g. 7.00pm)", type: "text", span: 1 },
   {
     key: "category",
     label: "Category",
@@ -81,14 +89,29 @@ const termFields: FieldDef[] = [
     ],
   },
   { key: "academicYear", label: "Academic year (e.g. 2025/26)", type: "text", required: true },
-  { key: "startDate", label: "Start date", type: "date", required: true },
-  { key: "endDate", label: "End date", type: "date", required: true },
-  { key: "halfTermStart", label: "Half term start", type: "date" },
-  { key: "halfTermEnd", label: "Half term end", type: "date" },
+  { key: "startDate", label: "Term begins", type: "date", required: true, span: 1 },
+  { key: "startTimeLabel", label: "Time (e.g. 12 noon)", type: "text", span: 1 },
+  { key: "endDate", label: "Term ends", type: "date", required: true, span: 1 },
+  { key: "endTimeLabel", label: "Time (e.g. 12 noon)", type: "text", span: 1 },
+  { key: "halfTermStart", label: "Half term start", type: "date", span: 1 },
+  { key: "halfTermStartTimeLabel", label: "Time (e.g. 12 noon)", type: "text", span: 1 },
+  { key: "halfTermEnd", label: "Half term end", type: "date", span: 1 },
+  { key: "halfTermEndTimeLabel", label: "Time (e.g. 8.30am)", type: "text", span: 1 },
 ];
 
 function daysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
+}
+
+function formatDateTime(date: string | null, timeLabel: string | null) {
+  if (!date) return "";
+  return timeLabel ? `${formatDate(date)} ${timeLabel}` : formatDate(date);
+}
+
+function formatEventWhen(e: CalendarEvent) {
+  const start = formatDateTime(e.date, e.startTimeLabel);
+  if (!e.endDate) return start;
+  return `${start} – ${formatDateTime(e.endDate, e.endTimeLabel)}`;
 }
 
 export function CalendarPage() {
@@ -180,6 +203,16 @@ export function CalendarPage() {
         </div>
       </div>
 
+      <div className="mb-4">
+        <ImportExportBar
+          label="Term dates & calendar (exeats, INSET days, etc.)"
+          templateUrl="/api/imports/term-calendar/template"
+          exportUrl="/api/imports/term-calendar/export"
+          importUrl="/imports/term-calendar"
+          onImported={load}
+        />
+      </div>
+
       {tab === "calendar" ? (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
@@ -243,7 +276,7 @@ export function CalendarPage() {
                             <div
                               key={e.id}
                               className="flex items-center gap-1 truncate"
-                              title={e.title}
+                              title={`${e.title} (${formatEventWhen(e)})`}
                               onClick={(ev) => {
                                 ev.stopPropagation();
                                 setModal({ mode: "event", editing: e });
@@ -273,7 +306,7 @@ export function CalendarPage() {
                   <li key={e.id} className="py-2 flex items-center gap-3">
                     <span className={`w-2 h-2 rounded-full shrink-0 ${CATEGORY_COLOUR[e.category] ?? "bg-ink-300"}`} />
                     <span className="text-sm text-ink-800 flex-1">{e.title}</span>
-                    <span className="text-xs text-ink-400">{formatDate(e.date)}</span>
+                    <span className="text-xs text-ink-400">{formatEventWhen(e)}</span>
                     <button className="text-xs text-ink-400 hover:text-brand-700" onClick={() => setModal({ mode: "event", editing: e })}>
                       Edit
                     </button>
@@ -287,14 +320,7 @@ export function CalendarPage() {
         </>
       ) : (
         <div className="card p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <ImportExportBar
-              label="Term dates"
-              templateUrl="/api/imports/terms/template"
-              exportUrl="/api/imports/terms/export"
-              importUrl="/imports/terms"
-              onImported={load}
-            />
+          <div className="flex items-center justify-end mb-3">
             <button className="btn-primary" onClick={() => setModal({ mode: "term", editing: null })}>
               + Add term
             </button>
@@ -315,10 +341,12 @@ export function CalendarPage() {
                 <tr key={t.id} className="border-b border-ink-50">
                   <td className="py-2">{t.name}</td>
                   <td className="py-2">{t.academicYear}</td>
-                  <td className="py-2">{formatDate(t.startDate)}</td>
-                  <td className="py-2">{formatDate(t.endDate)}</td>
+                  <td className="py-2">{formatDateTime(t.startDate, t.startTimeLabel)}</td>
+                  <td className="py-2">{formatDateTime(t.endDate, t.endTimeLabel)}</td>
                   <td className="py-2">
-                    {t.halfTermStart ? `${formatDate(t.halfTermStart)} – ${formatDate(t.halfTermEnd)}` : "—"}
+                    {t.halfTermStart
+                      ? `${formatDateTime(t.halfTermStart, t.halfTermStartTimeLabel)} – ${formatDateTime(t.halfTermEnd, t.halfTermEndTimeLabel)}`
+                      : "—"}
                   </td>
                   <td className="py-2 text-right">
                     <button className="text-xs text-ink-400 hover:text-brand-700 mr-3" onClick={() => setModal({ mode: "term", editing: t })}>

@@ -491,17 +491,25 @@ export async function buildFullBackupWorkbook(prisma: PrismaClient): Promise<Exc
       { header: "Term", key: "term" },
       { header: "AcademicYear", key: "academicYear" },
       { header: "StartDate", key: "startDate", date: true },
+      { header: "StartTime", key: "startTimeLabel" },
       { header: "EndDate", key: "endDate", date: true },
+      { header: "EndTime", key: "endTimeLabel" },
       { header: "HalfTermStart", key: "halfTermStart", date: true },
+      { header: "HalfTermStartTime", key: "halfTermStartTimeLabel" },
       { header: "HalfTermEnd", key: "halfTermEnd", date: true },
+      { header: "HalfTermEndTime", key: "halfTermEndTimeLabel" },
     ],
     terms.map((t) => ({
       term: t.name,
       academicYear: t.academicYear,
       startDate: t.startDate,
+      startTimeLabel: t.startTimeLabel ?? "",
       endDate: t.endDate,
+      endTimeLabel: t.endTimeLabel ?? "",
       halfTermStart: t.halfTermStart,
+      halfTermStartTimeLabel: t.halfTermStartTimeLabel ?? "",
       halfTermEnd: t.halfTermEnd,
+      halfTermEndTimeLabel: t.halfTermEndTimeLabel ?? "",
     }))
   );
 
@@ -511,12 +519,23 @@ export async function buildFullBackupWorkbook(prisma: PrismaClient): Promise<Exc
     [
       { header: "Title", key: "title", width: 30 },
       { header: "Date", key: "date", date: true },
+      { header: "StartTime", key: "startTimeLabel" },
       { header: "EndDate", key: "endDate", date: true },
+      { header: "EndTime", key: "endTimeLabel" },
       { header: "Category", key: "category" },
       { header: "Type", key: "type" },
       { header: "Notes", key: "notes", width: 26 },
     ],
-    events.map((e) => ({ title: e.title, date: e.date, endDate: e.endDate, category: e.category, type: e.type ?? "", notes: e.notes ?? "" }))
+    events.map((e) => ({
+      title: e.title,
+      date: e.date,
+      startTimeLabel: e.startTimeLabel ?? "",
+      endDate: e.endDate,
+      endTimeLabel: e.endTimeLabel ?? "",
+      category: e.category,
+      type: e.type ?? "",
+      notes: e.notes ?? "",
+    }))
   );
 
   addSheet(

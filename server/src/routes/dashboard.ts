@@ -74,26 +74,46 @@ router.get("/", async (req, res) => {
   let countdown: {
     term: string | null;
     nextHalfTerm: Date | null;
+    nextHalfTermTimeLabel: string | null;
     endOfTerm: Date | null;
+    endOfTermTimeLabel: string | null;
     nextTermStart: Date | null;
-  } = { term: null, nextHalfTerm: null, endOfTerm: null, nextTermStart: null };
+    nextTermStartTimeLabel: string | null;
+  } = {
+    term: null,
+    nextHalfTerm: null,
+    nextHalfTermTimeLabel: null,
+    endOfTerm: null,
+    endOfTermTimeLabel: null,
+    nextTermStart: null,
+    nextTermStartTimeLabel: null,
+  };
 
   if (currentTerm) {
-    const halfTermCandidates = [currentTerm.halfTermStart, currentTerm.halfTermEnd]
-      .filter((d): d is Date => !!d && d > now)
-      .sort((a, b) => a.getTime() - b.getTime());
+    const halfTermCandidates = [
+      { date: currentTerm.halfTermStart, label: currentTerm.halfTermStartTimeLabel },
+      { date: currentTerm.halfTermEnd, label: currentTerm.halfTermEndTimeLabel },
+    ]
+      .filter((c): c is { date: Date; label: string | null } => !!c.date && c.date > now)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
     countdown = {
       term: `${currentTerm.name} ${currentTerm.academicYear}`,
-      nextHalfTerm: halfTermCandidates[0] ?? null,
+      nextHalfTerm: halfTermCandidates[0]?.date ?? null,
+      nextHalfTermTimeLabel: halfTermCandidates[0]?.label ?? null,
       endOfTerm: currentTerm.endDate,
+      endOfTermTimeLabel: currentTerm.endTimeLabel,
       nextTermStart: null,
+      nextTermStartTimeLabel: null,
     };
   } else if (nextTerm) {
     countdown = {
       term: null,
       nextHalfTerm: null,
+      nextHalfTermTimeLabel: null,
       endOfTerm: null,
+      endOfTermTimeLabel: null,
       nextTermStart: nextTerm.startDate,
+      nextTermStartTimeLabel: nextTerm.startTimeLabel,
     };
   }
 
